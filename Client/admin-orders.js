@@ -1,3 +1,4 @@
+const API_BASE = "https://northparker.onrender.com";
 function getCurrentAdminEmail() {
   let email = null;
   try {
