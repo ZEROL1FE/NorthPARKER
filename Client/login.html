@@ -231,8 +231,8 @@
     
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email    = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
+      const email    = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("passwordInput").value.trim();
       const msgBox   = document.getElementById("message");
 
       // simple client-side validation
