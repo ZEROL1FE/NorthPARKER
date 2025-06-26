@@ -1,4 +1,4 @@
-const API_BASE = "https://northparker.onrender.com";   // ← change when deployed
+const API_BASE = "https://northparker.onrender.com";  
 window.menuItems = [];
 function getSession () {
   try { return JSON.parse(localStorage.getItem("session") || "{}"); }
