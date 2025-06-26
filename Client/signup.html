@@ -210,23 +210,29 @@
     </main>
 
     <script>
-      const API_BASE = "https://your-api.onrender.com";
-      const email    = document.getElementById("emailInput").value.trim();
-      const password = document.getElementById("passwordInput").value.trim();
-      const name     = document.getElementById("nameInput").value.trim();
+      const API_BASE = "https://your-backend.onrender.com";   <!-- update later -->
 
       document.getElementById("signupForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const email    = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value.trim();
-        const name     = document.getElementById("name").value.trim();
+
+        // correct IDs: *Input*
+        const name     = document.getElementById("nameInput").value.trim();
+        const email    = document.getElementById("emailInput").value.trim();
+        const password = document.getElementById("passwordInput").value.trim();
+        const confirm  = document.getElementById("confirmPasswordInput").value.trim();
         const msg      = document.getElementById("message");
+
+        if (password !== confirm) {
+          msg.textContent = "Passwords do not match.";
+          msg.className   = "error-message";
+          return;
+        }
 
         try {
           const res = await fetch(`${API_BASE}/auth/signup`, {
             method : "POST",
             headers: { "Content-Type": "application/json" },
-            body   : JSON.stringify({ email, password, name })
+            body   : JSON.stringify({ name, email, password })
           });
 
           if (!res.ok) {
@@ -234,12 +240,12 @@
             throw new Error(error);
           }
 
-          const data = await res.json();        // { token, role, name }
+          const data = await res.json();          // { token, role, name }
           localStorage.setItem("session", JSON.stringify(data));
 
           msg.textContent = "Sign-up complete! Redirecting…";
           msg.className   = "success-message";
-          setTimeout(() => window.location.href = "client-side.html", 800);
+          setTimeout(() => (window.location.href = "client-side.html"), 800);
 
         } catch (err) {
           msg.textContent = err.message;

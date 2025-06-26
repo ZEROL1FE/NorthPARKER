@@ -14,7 +14,19 @@ const PORT = process.env.PORT || 5000;
 // middleware
 app.use(cors());
 app.use(express.json());
-console.log("MONGODB_URI =", process.env.MONGODB_URI);
+
+
+const path = require("path");          // <─ add this import
+
+// Serve static files from the Client folder
+app.use(express.static(path.join(__dirname, "..", "..", "Client")));
+
+// Optional SPA fallback (so refreshing /client-side.html works)
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(__dirname, "..", "..", "Client", "login.html")); // or index.html
+});
+
+
 // ───── Connect to MongoDB ─────
 mongoose
   .connect(process.env.MONGODB_URI)
