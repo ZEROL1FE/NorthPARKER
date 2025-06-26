@@ -180,6 +180,27 @@ app.get("/menu", async (_, res) => {
   const menu = await Menu.find().sort({ name: 1 });
   res.json(menu);
 });
+app.post("/menu", authRequired, async (req, res) => {
+  // ⚠️ You may want to restrict this to role === "admin".
+  const doc = await Menu.create(req.body);
+  res.status(201).json(doc);
+});
+
+// Update an item by id    (PUT /menu/:id)
+app.put("/menu/:id", authRequired, async (req, res) => {
+  const doc = await Menu.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  if (!doc) return res.status(404).json({ error: "Item not found" });
+  res.json(doc);
+});
+
+// Delete an item by id    (DELETE /menu/:id)
+app.delete("/menu/:id", authRequired, async (req, res) => {
+  const doc = await Menu.findByIdAndDelete(req.params.id);
+  if (!doc) return res.status(404).json({ error: "Item not found" });
+  res.json({ success: true });
+});
 
 // --- route to mark an order as paid ---
 app.patch("/orders/:id/pay", authRequired, async (req, res) => {

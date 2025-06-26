@@ -1,3 +1,9 @@
+const state = {
+  selectedCategory: "Popular",
+  searchQuery: "",
+  menuItems: [],
+  categories: []
+}
 
 window.menuItems = [];
 function getSession () {
@@ -24,30 +30,34 @@ async function loadMenuFromDatabase() {
     const res = await fetch(`${API_BASE}/menu`);
     if (!res.ok) throw new Error("Failed to fetch menu");
 
-    const menu = await res.json();           // [{ _id, name, ... }]
+    const menu = await res.json();   // ⇒ [{ _id, name, price, … }]
     window.menuItems = menu.map((m) => ({
       ...m,
-      id      : m._id,          // keep old code happy
-      quantity: 0
+      id      : m._id,  // keep legacy code that expects .id
+      quantity: 0,
     }));
     syncStateMenuItems();
 
-    // Build unique category list
+    // Build category list
     const catSet = new Set();
-    window.menuItems.forEach(it =>
-      (it.categories || ["All"]).forEach(c => catSet.add(c))
+    window.menuItems.forEach((it) =>
+      (it.categories?.length ? it.categories : ["All"]).forEach((c) =>
+        catSet.add(c)
+      )
     );
-    state.categories       = Array.from(catSet).sort();
+
+    state.categories = Array.from(catSet).sort();
     state.selectedCategory = state.categories.includes("Popular")
-                             ? "Popular" : state.categories[0];
+      ? "Popular"
+      : state.categories[0];
 
     renderCategories();
     renderMenuItems();
     updateStats();
-
   } catch (err) {
     console.error("Menu load error → showing empty menu", err);
     window.menuItems = [];
+    syncStateMenuItems();
     renderCategories();
     renderMenuItems();
   }
