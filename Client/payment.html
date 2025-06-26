@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Options</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #f7f8fa;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .payment-card {
+      width: 100%;
+      max-width: 340px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(42,41,128,0.10);
+      padding: 24px 18px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .receipt-container {
+      width: 100%;
+      background: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+      margin-bottom: 18px;
+    }
+    .payment-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .receipt-title {
+      font-weight: 700;
+      color: #2a2980;
+      margin-bottom: 6px;
+      font-size: 1.08rem;
+      text-align: center;
+    }
+    .receipt-table {
+      text-align: center;
+      color: #3736a1;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .receipt-list {
+      margin-bottom: 6px;
+    }
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+      border-bottom: 1px solid #ececec;
+      font-size: 0.97rem;
+    }
+    .receipt-row:last-child {
+      border-bottom: none;
+    }
+    .receipt-total-row {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-top: 8px;
+      color: #3736a1;
+    }
+    .empty-receipt {
+      text-align: center;
+      color: #888;
+      font-size: 0.97rem;
+      padding: 10px 0;
+    }
+    .empty-receipt a {
+      color: #2a2980;
+      text-decoration: underline;
+      font-weight: 500;
+    }
+    .payment-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #2a2980;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .payment-options {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+    .payment-option {
+      display: flex;
+      align-items: center;
+      background: #f5f5f9;
+      border-radius: 7px;
+      padding: 7px 10px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border 0.2s, box-shadow 0.2s;
+      font-size: 0.97rem;
+      font-weight: 500;
+      color: #3736a1;
+    }
+    .payment-option.selected, .payment-option:hover {
+      border: 2px solid #2a2980;
+      box-shadow: 0 1px 4px rgba(42,41,128,0.06);
+      background: #e9eafd;
+    }
+    .payment-icon {
+      font-size: 1.05rem;
+      margin-right: 8px;
+    }
+    .pay-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #2a2980, #3736a1);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 0;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background 0.2s, transform 0.2s;
+      box-shadow: 0 2px 8px rgba(42,41,128,0.08);
+    }
+    .pay-btn:active {
+      transform: translateY(1px);
+    }
+    .back-btn {
+      background: none;
+      color: #2a2980;
+      border: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 4px;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="payment-card">
+    <div class="receipt-container" id="receiptContainer">
+      <!-- Receipt will be rendered here by JS -->
+    </div>
+    <div class="payment-section">
+      <div class="payment-title">Choose Payment Method</div>
+      <div class="payment-options">
+        <div class="payment-option" data-method="cash">
+          <span class="payment-icon">💵</span> Cash
+        </div>
+        <div class="payment-option" data-method="gcash">
+          <span class="payment-icon">📱</span> GCash
+        </div>
+        <div class="payment-option" data-method="card">
+          <span class="payment-icon">💳</span> Credit/Debit Card
+        </div>
+      </div>
+      <button class="pay-btn" id="payNowBtn" disabled>Pay Now</button>
+      <button class="back-btn" onclick="window.history.back()">Back to Order</button>
+    </div>
+  </div>
+  <script>
+    const options = document.querySelectorAll('.payment-option');
+    const payBtn = document.getElementById('payNowBtn');
+    let selected = null;
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selected = opt.getAttribute('data-method');
+        payBtn.disabled = false;
+      });
+    });
+    payBtn.addEventListener('click', () => {
+      if (!selected) return;
+      // Save payment method to latest order in orderHistory
+      let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
+      if (orderHistory.length > 0) {
+        orderHistory[orderHistory.length - 1].paymentMethod = selected;
+        localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
+      }
+      if (selected === 'cash') {
+        alert('Please prepare your cash. Our staff will assist you at your table.');
+        window.location.href = 'client-side.html';
+      } else if (selected === 'gcash') {
+        alert('Please scan the GCash QR code at your table or ask our staff for assistance.');
+        window.location.href = 'client-side.html';
+      } else if (selected === 'card') {
+        alert('Please present your card to our staff for payment.');
+        window.location.href = 'client-side.html';
+      }
+    });
+    // Receipt rendering
+    function renderReceipt() {
+      const container = document.getElementById('receiptContainer');
+      // Try to get order from localStorage (as used in handleCheckout)
+      let orderItems = [];
+      try {
+        orderItems = JSON.parse(localStorage.getItem('orderItems')) || [];
+      } catch (e) { orderItems = []; }
+      let tableNumber = localStorage.getItem('tableNumber') || '';
+      let total = 0;
+      if (!orderItems || !orderItems.length) {
+        container.innerHTML = `<div class='empty-receipt'>No order found.<br><a href='client-side.html'>Return to menu</a></div>`;
+        return;
+      }
+      let html = `<div class='receipt-title'>Order Receipt</div>`;
+      if (tableNumber) {
+        html += `<div class='receipt-table'>Table Number: <b>${tableNumber}</b></div>`;
+      }
+      html += `<div class='receipt-list'>`;
+      orderItems.forEach(item => {
+        const itemTotal = (item.price * item.quantity);
+        total += itemTotal;
+        html += `<div class='receipt-row'><span>${item.name} x${item.quantity}</span><span>₱${itemTotal.toFixed(2)}</span></div>`;
+      });
+      html += `</div><div class='receipt-total-row'><span>Total</span><span>₱${total.toFixed(2)}</span></div>`;
+      container.innerHTML = html;
+    }
+    renderReceipt();
+  </script>
+</body>
+</html> 

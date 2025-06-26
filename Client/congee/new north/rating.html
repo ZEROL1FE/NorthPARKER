@@ -1,0 +1,509 @@
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  .feedback-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background-color: #fff;
+  }
+
+  .feedback-card {
+    width: 400px;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0px 4px 10px 5px rgba(15, 38, 129, 0.5);
+    background-color: #f4f4f4;
+  }
+
+  .feedback-header {
+    margin-bottom: 36px;
+  }
+
+  .feedback-title {
+    font-family: "Poppins", sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    color: #000;
+    margin-bottom: 8px;
+  }
+
+  .feedback-description {
+    font-family: "Poppins", sans-serif;
+    font-size: 14px;
+    text-align: center;
+    color: #000;
+  }
+
+  .rating-section {
+    margin-bottom: 20px;
+  }
+
+  .rating-question {
+    font-family: "Poppins", sans-serif;
+    font-size: 14px;
+    text-align: center;
+    color: #000;
+    margin-bottom: 16px;
+    font-weight: normal;
+  }
+
+  .star-rating-group {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .star-wrapper {
+    cursor: pointer;
+    position: relative;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .star {
+    width: 24px;
+    height: 24px;
+  }
+
+  
+    .star-wrapper path {
+    fill: #1d1b20; /* Default star color */
+  }
+
+  .star-wrapper.selected path {
+    fill: #ffd700; /* Highlighted star */
+  }
+
+
+
+  .comments-section {
+    margin-top: 30px;
+  }
+
+  .comments-title {
+    font-family: "Poppins", sans-serif;
+    font-size: 14px;
+    text-align: center;
+    color: #000;
+    margin-bottom: 16px;
+    font-weight: normal;
+  }
+
+  .comments-textarea {
+    width: 100%;
+    height: 100px;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    margin: 0 auto;
+    background-color: #e5e3e3;
+    display: block;
+    padding: 10px;
+    font-family: "Poppins", sans-serif;
+    resize: none;
+  }
+  .submit-btn {
+    background-color: #b1b1b1; /* Green background */
+    color: black;              /* White text */
+    border: none;              /* No border */
+    padding: 10px 20px;        /* Padding inside the button */
+    text-align: center;        /* Center the text */
+    text-decoration: none;     /* Remove underline */
+    display: inline-block;     /* Allow the button to sit inline */
+    font-size: 16px;           /* Text size */
+    margin: 4px 2px;           /* Small margin around the button */
+    cursor: pointer;          /* Pointer cursor on hover */
+    border-radius: 4px;        /* Rounded corners */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+  }
+
+  .submit-btn:hover {
+    background-color: #343434; /* Darker green on hover */
+    color: white;
+  }
+  .goback {
+    background-color: #b1b1b1; /* Green background */
+    color: black;              /* White text */
+    border: none;              /* No border */
+    padding: 10px 20px;        /* Padding inside the button */
+    text-align: center;        /* Center the text */
+    text-decoration: none;     /* Remove underline */
+    display: inline-block;     /* Allow the button to sit inline */
+    font-size: 16px;           /* Text size */
+    margin: 4px 2px;           /* Small margin around the button */
+    cursor: pointer;          /* Pointer cursor on hover */
+    border-radius: 4px;        /* Rounded corners */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+  }
+
+  .goback:hover {
+    background-color: #343434; /* Darker green on hover */
+    color: white;
+  }
+
+  @media (max-width: 991px) {
+    .feedback-card {
+      width: 90%;
+      max-width: 400px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .feedback-card {
+      width: 100%;
+      padding: 20px;
+    }
+
+    .feedback-title {
+      font-size: 28px;
+    }
+
+    .star-rating-group {
+      gap: 15px;
+    }
+
+    .comments-textarea {
+      width: 100%;
+      height: 120px;
+    }
+  }
+
+</style>
+<button class="goback" onclick="window.location.href='new.html'"> Go back</button>
+<main class="feedback-container">
+  
+  <section class="feedback-card">
+    <header class="feedback-header">
+      <h1 class="feedback-title">Rate us!</h1>
+      <p class="feedback-description">
+        We would love to hear your feedback and rating about our food and
+        service!
+      </p>
+    </header>
+
+    <section class="rating-section">
+      <h2 class="rating-question">How do you like the food?</h2>
+      <div class="star-rating-group" data-rating-group="food">
+        <div class="star-wrapper" data-rating="1">
+          <svg
+            class="star"
+            width="24"
+            height="24"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.8185L9.3125 19.0372L2.5 13.131L11.5 12.3497L15 4.06845L18.5 12.3497L27.5 13.131L20.6875 19.0372L22.7188 27.8185L15 23.1622L7.28125 27.8185Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="2">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.1935L9.3125 19.4122L2.5 13.506L11.5 12.7247L15 4.44345L18.5 12.7247L27.5 13.506L20.6875 19.4122L22.7188 28.1935L15 23.5372L7.28125 28.1935Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="3">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.5685L9.3125 18.7872L2.5 12.881L11.5 12.0997L15 3.81845L18.5 12.0997L27.5 12.881L20.6875 18.7872L22.7188 27.5685L15 22.9122L7.28125 27.5685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="4">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.5685L9.3125 18.7872L2.5 12.881L11.5 12.0997L15 3.81845L18.5 12.0997L27.5 12.881L20.6875 18.7872L22.7188 27.5685L15 22.9122L7.28125 27.5685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="5">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.5685L9.3125 18.7872L2.5 12.881L11.5 12.0997L15 3.81845L18.5 12.0997L27.5 12.881L20.6875 18.7872L22.7188 27.5685L15 22.9122L7.28125 27.5685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="rating-section">
+      <h2 class="rating-question">How do you like the service?</h2>
+      <div class="star-rating-group" data-rating-group="service">
+        <div class="star-wrapper" data-rating="1">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.0685L9.3125 19.2872L2.5 13.381L11.5 12.5997L15 4.31845L18.5 12.5997L27.5 13.381L20.6875 19.2872L22.7188 28.0685L15 23.4122L7.28125 28.0685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="2">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.4435L9.3125 19.6622L2.5 13.756L11.5 12.9747L15 4.69345L18.5 12.9747L27.5 13.756L20.6875 19.6622L22.7188 28.4435L15 23.7872L7.28125 28.4435Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="3">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.8185L9.3125 19.0372L2.5 13.131L11.5 12.3497L15 4.06845L18.5 12.3497L27.5 13.131L20.6875 19.0372L22.7188 27.8185L15 23.1622L7.28125 27.8185Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="4">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.8185L9.3125 19.0372L2.5 13.131L11.5 12.3497L15 4.06845L18.5 12.3497L27.5 13.131L20.6875 19.0372L22.7188 27.8185L15 23.1622L7.28125 27.8185Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="5">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.8185L9.3125 19.0372L2.5 13.131L11.5 12.3497L15 4.06845L18.5 12.3497L27.5 13.131L20.6875 19.0372L22.7188 27.8185L15 23.1622L7.28125 27.8185Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="rating-section">
+      <h2 class="rating-question">Overall experience?</h2>
+      <div class="star-rating-group" data-rating-group="overall">
+        <div class="star-wrapper" data-rating="1">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.3185L9.3125 19.5372L2.5 13.631L11.5 12.8497L15 4.56845L18.5 12.8497L27.5 13.631L20.6875 19.5372L22.7188 28.3185L15 23.6622L7.28125 28.3185Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="2">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 27.6935L9.3125 18.9122L2.5 13.006L11.5 12.2247L15 3.94345L18.5 12.2247L27.5 13.006L20.6875 18.9122L22.7188 27.6935L15 23.0372L7.28125 27.6935Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="3">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.0685L9.3125 19.2872L2.5 13.381L11.5 12.5997L15 4.31845L18.5 12.5997L27.5 13.381L20.6875 19.2872L22.7188 28.0685L15 23.4122L7.28125 28.0685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="4">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.0685L9.3125 19.2872L2.5 13.381L11.5 12.5997L15 4.31845L18.5 12.5997L27.5 13.381L20.6875 19.2872L22.7188 28.0685L15 23.4122L7.28125 28.0685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+        <div class="star-wrapper" data-rating="5">
+          <svg
+            class="star"
+            width="30"
+            height="31"
+            viewBox="0 0 30 31"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.28125 28.0685L9.3125 19.2872L2.5 13.381L11.5 12.5997L15 4.31845L18.5 12.5997L27.5 13.381L20.6875 19.2872L22.7188 28.0685L15 23.4122L7.28125 28.0685Z"
+              fill="#1D1B20"
+            ></path>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="comments-section">
+      <h2 class="comments-title">Any comments/suggestions?</h2>
+      <textarea
+        class="comments-textarea"
+        aria-label="Enter your comments or suggestions"
+      ></textarea>
+    </section>
+    <button class="submit-btn"> Submit</button>
+  </section>
+</main>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const ratingGroups = document.querySelectorAll(".star-rating-group");
+
+    ratingGroups.forEach((group) => {
+      const stars = Array.from(group.querySelectorAll(".star-wrapper"));
+
+      stars.forEach((star, index) => {
+        star.addEventListener("click", () => {
+          // Set selected class only up to clicked index
+          stars.forEach((s, i) => {
+            if (i <= index) {
+              s.classList.add("selected");
+            } else {
+              s.classList.remove("selected");
+            }
+          });
+
+          // Optional: store rating value on the group
+          group.setAttribute("data-selected", index + 1);
+        });
+      });
+    });
+    const submitBtn = document.querySelector('.submit-btn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        // Collect ratings
+        const ratings = {};
+        document.querySelectorAll('.star-rating-group').forEach(group => {
+          const groupName = group.getAttribute('data-rating-group');
+          const ratingValue = group.getAttribute('data-selected') || "0";
+          ratings[groupName] = parseInt(ratingValue, 10);
+        });
+
+        // Collect comments
+        const comments = document.querySelector('.comments-textarea')?.value || "";
+
+        // Store in localStorage
+        localStorage.setItem('userRating', JSON.stringify({
+          ratings,
+          comments,
+          timestamp: new Date().toISOString()
+        }));
+
+        alert('Thank you for rating us!');
+        window.location.href = 'new.html';
+      });
+    }
+  });
+  function logout() {
+      localStorage.removeItem('currentUser'); // or whatever key you're using to track login
+      alert('You have been logged out.');
+      window.location.href = 'login.html'; // Redirect to login page
+  }
+
+  if (!localStorage.getItem('currentUser')) {
+      alert('You must be logged in to access this page.');
+      window.location.href = 'login.html';
+  }
+
+</script>

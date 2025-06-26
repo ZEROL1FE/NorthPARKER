@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset User Accounts</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #2a2980;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1f1f60;
+        }
+        .success {
+            color: #27ae60;
+            background: #d5f4e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fadbd8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reset User Accounts</h1>
+        
+        <div class="info">
+            <h3>Current Issue:</h3>
+            <p>The login system is not recognizing the user account. This page will help reset and recreate the user database.</p>
+        </div>
+
+        <button onclick="resetUsers()">Reset All Users</button>
+        <button onclick="createUsers()">Create Default Users</button>
+        <button onclick="showUsers()">Show Current Users</button>
+        <button onclick="clearAll()">Clear All Data</button>
+        <button onclick="window.location.href='login.html'">Go to Login</button>
+         <button onclick="window.location.href='admin-side.html'">Go back to Admin</button>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        // Simple password hashing function
+        function hashPassword(password) {
+            return btoa(password + "salt");
+        }
+
+        function resetUsers() {
+            try {
+                // Clear existing users
+                localStorage.removeItem("user");
+                
+                // Create new users
+                const users = [
+                    {
+                        id: 1,
+                        email: "admin@gmail.com",
+                        password: hashPassword("123456"),
+                        role: "admin",
+                        name: "Administrator",
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null
+                    },
+                    {
+                        id: 2,
+                        email: "user@gmail.com",
+                        password: hashPassword("123456"),
+                        role: "user",
+                        name: "Regular User",
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null
+                    }
+                ];
+                
+                localStorage.setItem("user", JSON.stringify(users));
+                
+                document.getElementById('output').innerHTML = `
+                    <div class="success">
+                        ✅ Users reset successfully!<br>
+                        Created ${users.length} users:<br>
+                        - admin@gmail.com (admin)<br>
+                        - user@gmail.com (user)
+                    </div>
+                `;
+                
+                console.log('Users reset:', users);
+                
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        ❌ Error resetting users: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function createUsers() {
+            try {
+                const existingUsers = JSON.parse(localStorage.getItem("user")) || [];
+                
+                // Check if users already exist
+                const adminExists = existingUsers.find(u => u.email === "admin@gmail.com");
+                const userExists = existingUsers.find(u => u.email === "user@gmail.com");
+                
+                let message = "Users status:<br>";
+                
+                if (!adminExists) {
+                    existingUsers.push({
+                        id: existingUsers.length + 1,
+                        email: "admin@gmail.com",
+                        password: hashPassword("123456"),
+                        role: "admin",
+                        name: "Administrator",
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null
+                    });
+                    message += "✅ Created admin@gmail.com<br>";
+                } else {
+                    message += "ℹ️ admin@gmail.com already exists<br>";
+                }
+                
+                if (!userExists) {
+                    existingUsers.push({
+                        id: existingUsers.length + 1,
+                        email: "user@gmail.com",
+                        password: hashPassword("123456"),
+                        role: "user",
+                        name: "Regular User",
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null
+                    });
+                    message += "✅ Created user@gmail.com<br>";
+                } else {
+                    message += "ℹ️ user@gmail.com already exists<br>";
+                }
+                
+                localStorage.setItem("user", JSON.stringify(existingUsers));
+                
+                document.getElementById('output').innerHTML = `
+                    <div class="success">
+                        ${message}
+                    </div>
+                `;
+                
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        ❌ Error creating users: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function showUsers() {
+            try {
+                const users = JSON.parse(localStorage.getItem("user")) || [];
+                let userListHtml = `<h3>Current Users (${users.length}):</h3>`;
+                if (users.length === 0) {
+                    userListHtml += `<div>No users found.</div>`;
+                } else {
+                    userListHtml += `<ul style="list-style:none;padding:0;">`;
+                    users.forEach((user) => {
+                        userListHtml += `
+                            <li style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+                                <span>
+                                    <strong>${user.email}</strong> (${user.role})<br>
+                                    Name: ${user.name}
+                                </span>
+                                <span>
+                                    <button onclick="deleteUser(${user.id})">Delete</button>
+                                    ${
+                                        user.role === "admin"
+                                        ? `<button onclick="toggleRole(${user.id}, 'user')">Demote to User</button>`
+                                        : `<button onclick="toggleRole(${user.id}, 'admin')">Promote to Admin</button>`
+                                    }
+                                </span>
+                            </li>
+                        `;
+                    });
+                    userListHtml += `</ul>`;
+                }
+                document.getElementById('output').innerHTML = `
+                    <div class="info">
+                        ${userListHtml}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        ❌ Error showing users: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearAll() {
+            try {
+                localStorage.clear();
+                document.getElementById('output').innerHTML = `
+                    <div class="success">
+                        ✅ All localStorage data cleared!
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        ❌ Error clearing data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Show current users on page load
+        window.onload = function() {
+                    showUsers();
+                };
+        function deleteUser(userId) {
+            try {
+                let users = JSON.parse(localStorage.getItem("user")) || [];
+                users = users.filter(u => u.id !== userId);
+                localStorage.setItem("user", JSON.stringify(users));
+                showUsers();
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        ❌ Error deleting user: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        function toggleRole(userId, newRole) {
+            try {
+                let users = JSON.parse(localStorage.getItem("user")) || [];
+                users = users.map(u => u.id === userId ? { ...u, role: newRole } : u);
+                localStorage.setItem("user", JSON.stringify(users));
+                showUsers();
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        ❌ Error updating role: ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

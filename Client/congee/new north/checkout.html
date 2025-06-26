@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Checkout with Payment Integration</title>
+  <style>
+    body { font-family: Arial; background: #f2f2f2; padding: 20px; }
+    .box { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; margin-bottom: 20px; }
+    h2 { margin-top: 0; }
+    .btn { padding: 10px; width: 100%; background: #28a745; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    .btn:hover { background: #218838; }
+    .payment-details { display: none; margin-top: 10px; }
+    .summary { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-top: 30px; }
+    .item { display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+
+  <!-- Cart Section -->
+  <div class="box" id="cart">
+    <h2>Cart Summary</h2>
+    <div id="cart-items"></div>
+    <hr>
+    <p><strong>Total:</strong> ₱<span id="cart-total">0.00</span></p>
+  </div>
+
+  <!-- Payment Section -->
+  <div class="box">
+    <h2>Payment Method</h2>
+    <label><input type="radio" name="payment" value="cash" onclick="selectPayment('cash')"> Cash</label><br>
+    <label><input type="radio" name="payment" value="online" onclick="selectPayment('online')"> Online Payment</label>
+
+    <div id="cash-details" class="payment-details">
+      <p>You will pay with <strong>Cash</strong>. Please prepare the exact amount.</p>
+    </div>
+
+    <div id="online-details" class="payment-details">
+      <label for="provider">Choose Provider:</label>
+      <select id="provider">
+        <option value="GCash">GCash</option>
+        <option value="Maya">Maya</option>
+        <option value="Credit Card">Credit Card</option>
+      </select><br><br>
+
+      <label for="ref">Reference No.:</label><br>
+      <input type="text" id="ref" placeholder="Enter reference number">
+    </div>
+
+    <button class="btn" onclick="submitOrder()">Place Order</button>
+  </div>
+
+  <!-- Receipt Summary -->
+  <div class="summary" id="receipt" style="display:none;">
+    <h2>Receipt</h2>
+    <div id="receipt-items"></div>
+    <p><strong>Total Paid:</strong> ₱<span id="receipt-total"></span></p>
+    <p><strong>Payment Method:</strong> <span id="receipt-method"></span></p>
+    <p id="receipt-provider" style="display:none;"><strong>Provider:</strong> <span></span></p>
+    <p id="receipt-ref" style="display:none;"><strong>Reference No.:</strong> <span></span></p>
+  </div>
+
+  <script>
+    // Sample Cart Items (you can make this dynamic)
+    const cart = [
+      { name: "Burger", price: 120 },
+      { name: "Fries", price: 60 },
+      { name: "Drink", price: 40 }
+    ];
+
+    // Display cart items
+    function renderCart() {
+      let total = 0;
+      const cartContainer = document.getElementById("cart-items");
+      cartContainer.innerHTML = "";
+
+      cart.forEach(item => {
+        total += item.price;
+        cartContainer.innerHTML += `
+          <div class="item">
+            <span>${item.name}</span>
+            <span>₱${item.price.toFixed(2)}</span>
+          </div>
+        `;
+      });
+
+      document.getElementById("cart-total").textContent = total.toFixed(2);
+    }
+
+    function selectPayment(method) {
+      document.getElementById("cash-details").style.display = method === "cash" ? "block" : "none";
+      document.getElementById("online-details").style.display = method === "online" ? "block" : "none";
+    }
+
+    function submitOrder() {
+      const payment = document.querySelector('input[name="payment"]:checked');
+      if (!payment) return alert("Please select a payment method.");
+
+      const method = payment.value;
+      const order = {
+        cart: cart,
+        total: cart.reduce((sum, item) => sum + item.price, 0),
+        payment: {
+          method: method
+        }
+      };
+
+      if (method === "online") {
+        const provider = document.getElementById("provider").value;
+        const ref = document.getElementById("ref").value.trim();
+        if (!ref) return alert("Enter your reference number.");
+        order.payment.provider = provider;
+        order.payment.reference = ref;
+      }
+
+      // Save to localStorage
+      localStorage.setItem("orderInfo", JSON.stringify(order));
+
+      // Show Receipt
+      renderReceipt(order);
+    }
+
+    function renderReceipt(data) {
+      const receipt = document.getElementById("receipt");
+      const container = document.getElementById("receipt-items");
+      const method = data.payment.method;
+      let total = 0;
+
+      container.innerHTML = "";
+      data.cart.forEach(item => {
+        total += item.price;
+        container.innerHTML += `<div class="item"><span>${item.name}</span><span>₱${item.price.toFixed(2)}</span></div>`;
+      });
+
+      document.getElementById("receipt-total").textContent = total.toFixed(2);
+      document.getElementById("receipt-method").textContent = method === "cash" ? "Cash" : "Online";
+
+      if (method === "online") {
+        document.getElementById("receipt-provider").style.display = "block";
+        document.getElementById("receipt-provider").querySelector("span").textContent = data.payment.provider;
+
+        document.getElementById("receipt-ref").style.display = "block";
+        document.getElementById("receipt-ref").querySelector("span").textContent = data.payment.reference;
+      } else {
+        document.getElementById("receipt-provider").style.display = "none";
+        document.getElementById("receipt-ref").style.display = "none";
+      }
+
+      receipt.style.display = "block";
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    // Auto-load saved order
+    window.onload = function () {
+      renderCart();
+      const saved = localStorage.getItem("orderInfo");
+      if (saved) {
+        const order = JSON.parse(saved);
+        renderReceipt(order);
+      }
+    };
+  </script>
+</body>
+</html>
+

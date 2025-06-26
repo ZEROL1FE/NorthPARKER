@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editable Menu with Payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 20px auto;
+      text-align: center;
+      background: beige;
+      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: yellow;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 5px;
+      border: 2px solid blue;
+    }
+    button {
+      margin-left: 5px;
+      cursor: pointer;
+      background: blue;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+    }
+    button:hover {
+      background: darkblue;
+    }
+    #payment-section {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    #receipt {
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Menu List</h2>
+  <ul id="menuList"></ul>
+  <button onclick="addItem()">Add Item</button>
+
+  <button onclick="proceedToCheckoutInline()" style="margin-top: 20px;">Proceed to Checkout</button>
+
+  <!-- Payment Section -->
+  <div id="payment-section" style="display: none;">
+    <h3>Select Payment Method</h3>
+    <label><input type="radio" name="payment" value="cash"> Cash</label><br>
+    <label><input type="radio" name="payment" value="online"> Online</label><br><br>
+
+    <div id="online-details" style="display: none;">
+      <label>Provider:</label>
+      <select id="provider">
+        <option>GCash</option>
+        <option>Maya</option>
+        <option>Credit Card</option>
+      </select><br><br>
+      <input type="text" id="reference" placeholder="Enter Reference No.">
+    </div>
+
+    <button onclick="generateReceipt()">Place Order</button>
+  </div>
+
+  <!-- Receipt Section -->
+  <div id="receipt" style="display:none;">
+    <h3>Receipt</h3>
+    <div id="receipt-items"></div>
+    <p><strong>Total:</strong> ₱<span id="receipt-total"></span></p>
+    <p><strong>Payment Method:</strong> <span id="receipt-method"></span></p>
+    <div id="ref-details" style="display:none;">
+      <p><strong>Provider:</strong> <span id="receipt-provider"></span></p>
+      <p><strong>Reference No.:</strong> <span id="receipt-ref"></span></p>
+    </div>
+  </div>
+
+  <script>
+    let menu = JSON.parse(localStorage.getItem("editableMenu")) || ["Item 1", "Item 2"];
+
+    function updateMenuDisplay() {
+      const list = document.getElementById("menuList");
+      list.innerHTML = "";
+      menu.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `${item} <button onclick="editItem(${index})">Edit</button> <button onclick="deleteItem(${index})">Delete</button>`;
+        list.appendChild(li);
+      });
+    }
+
+    function editItem(index) {
+      const newText = prompt("Edit item:", menu[index]);
+      if (newText) {
+        menu[index] = newText;
+        saveMenu();
+        updateMenuDisplay();
+      }
+    }
+
+    function deleteItem(index) {
+      menu.splice(index, 1);
+      saveMenu();
+      updateMenuDisplay();
+    }
+
+    function addItem() {
+      const newItem = prompt("Enter new item:");
+      if (newItem) {
+        menu.push(newItem);
+        saveMenu();
+        updateMenuDisplay();
+      }
+    }
+
+    function saveMenu() {
+      localStorage.setItem("editableMenu", JSON.stringify(menu));
+    }
+
+    function proceedToCheckoutInline() {
+      document.getElementById("payment-section").style.display = "block";
+    }
+
+    function generateReceipt() {
+      const paymentMethod = document.querySelector('input[name="payment"]:checked');
+      if (!paymentMethod) return alert("Please select a payment method.");
+
+      const isOnline = paymentMethod.value === 'online';
+      const provider = document.getElementById("provider").value;
+      const ref = document.getElementById("reference").value.trim();
+
+      if (isOnline && !ref) return alert("Please enter a reference number.");
+
+      const receiptItems = document.getElementById("receipt-items");
+      receiptItems.innerHTML = "";
+
+      let total = menu.length * 100;
+      menu.forEach(item => {
+        receiptItems.innerHTML += `<p>${item} - ₱100.00</p>`;
+      });
+
+      document.getElementById("receipt-total").textContent = total.toFixed(2);
+      document.getElementById("receipt-method").textContent = isOnline ? 'Online Payment' : 'Cash';
+
+      const refSection = document.getElementById("ref-details");
+      if (isOnline) {
+        refSection.style.display = "block";
+        document.getElementById("receipt-provider").textContent = provider;
+        document.getElementById("receipt-ref").textContent = ref;
+      } else {
+        refSection.style.display = "none";
+      }
+
+      document.getElementById("receipt").style.display = "block";
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      updateMenuDisplay();
+      document.querySelectorAll('input[name="payment"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          const isOnline = document.querySelector('input[name="payment"]:checked').value === 'online';
+          document.getElementById("online-details").style.display = isOnline ? "block" : "none";
+        });
+      });
+    });
+  </script>
+</body>
+</html>

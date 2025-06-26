@@ -1,0 +1,207 @@
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100vw;
+    background: linear-gradient(180deg, #fbcc34 51.52%, #ffe194 113.63%);
+    padding: 20px;
+  }
+
+  .login-card {
+    width: 400px;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0px 4px 10px 5px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f4f4f4;
+  }
+
+  .login-title {
+    font-family: "Poppins", sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 25px;
+    margin-top: 0;
+  }
+
+  .login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-wrapper {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .form-input {
+    width: 100%;
+    height: 50px;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    padding: 0 20px;
+    font-family: "Poppins", sans-serif;
+    font-size: 18px;
+    color: #000;
+    background-color: #e5e3e3;
+    box-sizing: border-box;
+  }
+
+  .forgot-password {
+    font-family: "Poppins", sans-serif;
+    font-size: 14px;
+    color: #000;
+    align-self: flex-end;
+    margin-bottom: 15px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .login-button {
+    width: 250px;
+    height: 50px;
+    border-radius: 50px;
+    border: none;
+    color: #fff;
+    font-family: "Poppins", sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 15px;
+    background-color: #20328c;
+  }
+
+  .signup-text {
+    font-family: "Poppins", sans-serif;
+    font-size: 16px;
+    color: #000;
+    margin: 0;
+  }
+
+  @media (max-width: 991px) {
+    .login-card {
+      width: 90%;
+      max-width: 400px;
+      padding: 30px;
+    }
+
+    .login-button {
+      width: 100%;
+      max-width: 250px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .login-card {
+      padding: 25px;
+    }
+
+    .login-title {
+      font-size: 24px;
+    }
+
+    .form-input {
+      font-size: 16px;
+      height: 45px;
+    }
+
+    .login-button {
+      font-size: 18px;
+      height: 45px;
+    }
+
+    .signup-text {
+      font-size: 14px;
+    }
+  }
+</style>
+
+<main class="login-container">
+  <section class="login-card">
+    <h1 class="login-title">Login</h1>
+    <form class="login-form">
+      <div class="input-wrapper">
+        <input id="email" type="email" placeholder="Email" class="form-input" />
+      </div>
+      <div class="input-wrapper">
+        <input id="password" type="password" placeholder="Password" class="form-input" />
+      </div>
+      <a href="#" class="forgot-password">Forgot Password?</a>
+      <button type="submit" class="login-button">Login</button>
+    </form>
+    <p class="signup-text">
+      Don't have an account yet? <a href="signup.html">Sign Up</a>
+    </p>
+  </section>
+
+  <script>
+    // Default user setup - only adds admin if no users exist
+    const existingUsers = JSON.parse(localStorage.getItem("users"));
+    if (!existingUsers || existingUsers.length === 0) {
+      const defaultUsers = [
+        { email: "admin@gmail.com", password: "123456", role: "admin" }
+      ];
+      localStorage.setItem("users", JSON.stringify(defaultUsers));
+    }
+  
+    // Handle login form submission
+    document.querySelector(".login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+  
+      const emailInput = document.getElementById("email").value.trim();
+      const passwordInput = document.getElementById("password").value.trim();
+  
+      const storedUsers = JSON.parse(localStorage.getItem("users"));
+  
+      // Find matching user
+      const matchedUser = storedUsers.find(
+        user => user.email === emailInput && user.password === passwordInput
+      );
+  
+      if (!matchedUser) {
+        alert("Incorrect email or password.");
+        return;
+      }
+  
+      // Save current logged in user to localStorage
+      localStorage.setItem("currentUser", JSON.stringify(matchedUser));
+  
+      // Redirect based on role
+      if (matchedUser.role === "admin") {
+        alert("Welcome, Admin!");
+        window.location.href = "menu-popular.html";
+      } else {
+        alert("Login successful!");
+        window.location.href = "new.html";
+      }
+    });
+  </script>
+  
+</main>

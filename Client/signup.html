@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .page-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100vw;
+        background: linear-gradient(180deg, #fbcc34 51.52%, #ffe194 113.63%);
+        padding: 20px;
+      }
+
+      .signup-container {
+        width: 400px;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0px 4px 10px 5px rgba(0, 0, 0, 0.25);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #f4f4f4;
+      }
+
+      .signup-title {
+        font-family: "Poppins", sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: #000;
+        margin-bottom: 25px;
+        margin-top: 0;
+      }
+
+      .signup-form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .form-group {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: "Poppins", sans-serif;
+        transition: border-color 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #fbcc34;
+      }
+
+      .signup-button {
+        width: 100%;
+        padding: 12px;
+        background: #2a2980;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: "Poppins", sans-serif;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 10px;
+      }
+
+      .signup-button:hover {
+        background: #1f1f60;
+      }
+
+      .login-text {
+        margin-top: 20px;
+        font-family: "Poppins", sans-serif;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .login-text a {
+        color: #2a2980;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .login-text a:hover {
+        text-decoration: underline;
+      }
+
+      .error-message {
+        color: #e74c3c;
+        font-size: 14px;
+        margin-top: 10px;
+        text-align: center;
+        font-family: "Poppins", sans-serif;
+      }
+
+      .success-message {
+        color: #27ae60;
+        font-size: 14px;
+        margin-top: 10px;
+        text-align: center;
+        font-family: "Poppins", sans-serif;
+      }
+
+      @media (max-width: 640px) {
+        .signup-container {
+          padding: 25px;
+        }
+
+        .signup-title {
+          font-size: 24px;
+        }
+
+        .form-input {
+          font-size: 16px;
+          height: 45px;
+        }
+
+        .signup-button {
+          font-size: 18px;
+          height: 45px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page-container">
+      <section class="signup-container">
+        <h1 class="signup-title">Sign Up</h1>
+        <form class="signup-form" id="signupForm">
+          <div class="form-group">
+            <input
+              type="text"
+              placeholder="Full Name"
+              class="form-input"
+              aria-label="Name"
+              id="nameInput"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <input
+              type="email"
+              placeholder="Email"
+              class="form-input"
+              aria-label="Email"
+              id="emailInput"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <input
+              type="password"
+              placeholder="Password"
+              class="form-input"
+              aria-label="Password"
+              id="passwordInput"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              class="form-input"
+              aria-label="Confirm Password"
+              id="confirmPasswordInput"
+              required
+            />
+          </div>
+
+          <button type="submit" class="signup-button">Create Account</button>
+          <div id="message"></div>
+        </form>
+        <p class="login-text">
+          Already have an account?
+          <a href="login.html"> Login</a>
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const API_BASE = "https://your-api.onrender.com";
+      const email    = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("passwordInput").value.trim();
+      const name     = document.getElementById("nameInput").value.trim();
+
+      document.getElementById("signupForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email    = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const name     = document.getElementById("name").value.trim();
+        const msg      = document.getElementById("message");
+
+        try {
+          const res = await fetch(`${API_BASE}/auth/signup`, {
+            method : "POST",
+            headers: { "Content-Type": "application/json" },
+            body   : JSON.stringify({ email, password, name })
+          });
+
+          if (!res.ok) {
+            const { error } = await res.json();
+            throw new Error(error);
+          }
+
+          const data = await res.json();        // { token, role, name }
+          localStorage.setItem("session", JSON.stringify(data));
+
+          msg.textContent = "Sign-up complete! Redirecting…";
+          msg.className   = "success-message";
+          setTimeout(() => window.location.href = "client-side.html", 800);
+
+        } catch (err) {
+          msg.textContent = err.message;
+          msg.className   = "error-message";
+        }
+      });
+    </script>
+  </body>
+</html>

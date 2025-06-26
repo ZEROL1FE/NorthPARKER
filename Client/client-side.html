@@ -1,0 +1,1222 @@
+<meta charset="UTF-8" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+<header class="header">
+  <nav class="nav">
+    <div class="menu-container">
+      <button onclick="toggleMenu()" class="menu-button">
+        <img 
+          src="https://c.animaapp.com/YbRZsaiC/img/line-md--close-to-menu-alt-transition-1@2x.png" 
+          alt="Menu"
+          class="menu-icon"
+        />
+      </button>
+      <div id="dropdownMenu" class="dropdown-content">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        <button class="logout-btn" onclick="window.location.href='order-history.html'">History</button>
+      </div>
+    </div>
+
+    <img
+      alt="North Park Logo"
+      src="https://c.animaapp.com/YbRZsaiC/img/images-1@2x.png"
+      class="logo"
+    />
+    <img
+      alt="Order"
+      src="https://c.animaapp.com/YbRZsaiC/img/lets-icons--order-1@2x.png"
+      class="order-icon"
+      onclick="toggleOrderForm()"
+    />
+  </nav>
+</header>
+<body>
+<main class="main">
+  <div class="search-container">
+    <img
+      alt="Search"
+      src="https://c.animaapp.com/YbRZsaiC/img/ph--magnifying-glass-bold-1@2x.png"
+      class="search-icon"
+    />
+    <input class="search-input" type="text" placeholder="Search..." />
+  </div>
+  <div class="categories-container">
+    <div class="categories-nav" id="categories">
+      <!-- Custom dropdown will be rendered here by JS -->
+    </div>
+  </div>
+  <div id="menuContainer" class="menu-grid">
+        
+      </div>
+
+  <div class="overlay" id="overlay" onclick="toggleOrderForm()"></div>
+  <section class="order-section hidden" id="orderSection">
+    <button class="close-button" onclick="toggleOrderForm()">×</button>
+    <h2 class="order-title">Your Order</h2>
+
+    <div class="table-number-container">
+      <label for="tableNumber" class="table-label">Table Number:</label>
+      <input
+        type="number"
+        id="tableNumber"
+        class="table-input"
+        min="1"
+        placeholder="Enter your table number"
+      />
+    </div>
+
+    <div id="orderItems" class="order-items">
+      <!-- Order items will be populated by JavaScript -->
+    </div>
+
+    <div class="order-summary">
+      <div class="total-amount">
+        <span>Total Amount:</span>
+        <span id="totalAmount">&#8369;0.00</span>
+      </div>
+      <button class="checkout-button" onclick="handleCheckout()">
+        Order
+      </button>
+      <button class="rate-btn-small" onclick="goToRating()">Rate Us!</button>
+    </div>
+    <div id="orderHistoryContainer"></div>
+  </section>
+  </body>
+  <script src="menucode.js"></script>
+
+<script>
+// Initialize client-side menu
+document.addEventListener('DOMContentLoaded', function() {
+  // Load menu from database
+  loadMenuFromDatabase();
+  
+  // Render the menu using the client-side function (not admin function)
+  if (typeof renderMenuItems === 'function') {
+    renderMenuItems();
+  }
+  
+  // Render categories
+  if (typeof renderCategories === 'function') {
+    renderCategories();
+  }
+});
+
+// Add click outside handler to close dropdown
+document.addEventListener('click', function(event) {
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  const menuButton = document.querySelector('.menu-button');
+  
+  if (dropdownMenu && menuButton) {
+    // If click is outside both the dropdown and the menu button, close dropdown
+    if (!dropdownMenu.contains(event.target) && !menuButton.contains(event.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  }
+});
+
+// Logout function
+function logout() {
+  console.log('Client logout function called');
+  try {
+    // Clear all session-related data
+    localStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('adminName');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('session');
+    console.log('LocalStorage cleared');
+    window.location.href = './login.html';
+  } catch (error) {
+    console.error('Error during logout:', error);
+    alert('Error during logout: ' + error.message);
+  }
+}
+if (!localStorage.getItem('session')) {
+  alert('You must be logged in to access this page.');
+  window.location.href = 'login.html';
+}
+
+// Toggle menu function
+function toggleMenu() {
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  if (dropdownMenu) {
+    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+  }
+}
+
+// Go to rating page function
+function goToRating() {
+  console.log('Navigating to rating page');
+  try {
+    window.location.href = './rating.html';
+  } catch (error) {
+    console.error('Error navigating to rating page:', error);
+    alert('Error navigating to rating page: ' + error.message);
+  }
+}
+</script>
+
+  <style>
+        
+        .price-controls {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 15px;
+          border-top: 1px solid #eee;
+        }
+        
+        .price {
+          font-weight: 600;
+          color: #ac8b20;
+        }
+        
+
+      .menu-container {
+        position: relative;
+        display: inline-block;
+      }
+      .menu-button {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+      }
+
+      .menu-icon {
+        width: 100%;
+        height: auto;
+        pointer-events: none; /* <<< KEY FIX */
+      }
+      
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        min-width: 120px;
+        z-index: 1050;
+        top: 100%;
+        left: 0;
+        border-radius: 8px;
+        margin-top: 4px;
+        border: 1px solid #eee;
+      }
+      
+      .dropdown-content a {
+        padding: 10px 15px;
+        display: block;
+        text-decoration: none;
+        color: black;
+      }
+      
+      .dropdown-content a:hover {
+        background-color: #f1f1f1;
+      }
+    .table-number-container {
+      margin: 16px 0;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+
+    .table-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #2a2980;
+    }
+
+    .table-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: "Poppins", sans-serif;
+    }
+
+    .table-input:focus {
+      outline: none;
+      border-color: #2a2980;
+      box-shadow: 0 0 0 2px rgba(42, 41, 128, 0.1);
+    }
+
+    .table-input::placeholder {
+      color: #999;
+    }
+
+    .table-input::-webkit-inner-spin-button,
+    .table-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .table-input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+  </style>
+</main>
+
+<style>
+  /* Updated and new styles */
+  .quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Add spacing between buttons and quantity */
+  }
+
+  .quantity-control button {
+    background-color: #3736a1;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s;
+  }
+
+  .quantity-control button:hover {
+    background-color: #2a2980;
+  }
+
+  .quantity-control .quantity {
+    font-weight: 600;
+    color: #333;
+    min-width: 18px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  /* Rate Us button styling */
+  .rate-btn {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: "Poppins", sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rate-btn:hover {
+    background: linear-gradient(135deg, #ee5a24, #ff6b6b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+  }
+
+  .rate-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  }
+
+  .rate-btn::before {
+    content: "⭐";
+    margin-right: 8px;
+    font-size: 16px;
+  }
+
+  /* Checkout button styling for consistency */
+  .checkout-button {
+    background: linear-gradient(135deg, #2a2980, #3736a1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: "Poppins", sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(42, 41, 128, 0.3);
+  }
+
+  .checkout-button:hover {
+    background: linear-gradient(135deg, #3736a1, #2a2980);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(42, 41, 128, 0.4);
+  }
+
+  .checkout-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(42, 41, 128, 0.3);
+  }
+
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1150;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .overlay.visible {
+    display: block;
+    opacity: 1;
+  }
+
+  .order-section {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    height: 100vh;
+    width: 300px;
+    background: white;
+    border-left: 1px solid #eee;
+    padding: 16px;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    z-index: 1200;
+    transition: right 0.3s ease-in-out;
+    overflow-y: auto;
+  }
+
+  .order-section:not(.hidden) {
+    right: 0; /* Slide in */
+  }
+
+  .hidden {
+    right: -400px; /* Slide out */
+  }
+
+  .order-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #2a2980;
+  }
+
+  .order-items {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .order-item-details {
+    flex: 1;
+  }
+
+  .order-item-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .order-item-price {
+    color: #2a2980;
+    font-weight: 600;
+  }
+
+  .order-summary {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid #eee;
+  }
+
+  .total-amount {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    background: #f5f5f5;
+    border-radius: 12px;
+  }
+
+  .no-results p {
+    margin-bottom: 16px;
+    color: #666;
+    font-size: 16px;
+  }
+
+  .clear-search-button {
+    padding: 8px 16px;
+    background: #2a2980;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: "Poppins", sans-serif;
+  }
+
+  .clear-search-button:hover {
+    background: #1f1f60;
+  }
+
+  mark {
+    background-color: #fbcc34;
+    padding: 2px 0;
+    border-radius: 2px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #2a2980;
+    padding: 5px 10px;
+    border-radius: 50%;
+  }
+
+  .close-button:hover {
+    background: #f5f5f5;
+  }
+
+  @media (max-width: 1024px) {
+    .order-section {
+      width: 85%;
+      right: -85%; /* Start off-screen for mobile */
+    }
+
+    .order-section:not(.hidden) {
+      right: 0;
+    }
+
+    .hidden {
+      right: -85%; /* Slide out for mobile */
+    }
+  }
+
+  /* Adjust the close button position for the sliding panel */
+  .close-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #2a2980;
+    padding: 5px 10px;
+    border-radius: 50%;
+    z-index: 100;
+  }
+
+  /* Add some spacing at the top of the order section for the close button */
+  .order-title {
+    margin-top: 40px;
+  }
+
+  /* Smooth scrolling for the order panel */
+  .order-items {
+    scrollbar-width: thin;
+    scrollbar-color: #2a2980 #f5f5f5;
+  }
+
+  .order-items::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .order-items::-webkit-scrollbar-track {
+    background: #f5f5f5;
+  }
+
+  .order-items::-webkit-scrollbar-thumb {
+    background-color: #2a2980;
+    border-radius: 3px;
+  }
+</style>
+
+<style>
+  /* Base styles */
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: #fff;
+    font-family:
+      "Poppins",
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  @media (max-width: 640px) {
+    body {
+      padding: 0 16px;
+    }
+  }
+
+  /* Header styles */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    border-bottom: 1px solid #eee;
+    padding: 16px 0;
+    background-color: #fbcc34;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .menu-icon {
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: center;
+    width: 24px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  @media (max-width: 640px) {
+    .menu-icon {
+      display: block;
+    }
+  }
+
+  .logo {
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: center;
+    width: auto;
+    height: 40px;
+    overflow: hidden;
+  }
+
+  .order-icon {
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: center;
+    width: 24px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  /* Main content styles */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+
+  .search-icon {
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: center;
+    width: 20px;
+    overflow: hidden;
+  }
+
+  .search-input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .search-input::placeholder {
+    color: #999;
+  }
+
+  /* Categories navigation */
+  .categories-nav {
+    margin-bottom: 32px;
+    padding: 8px 0;
+  }
+  .category-dropdown {
+    width: 220px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: 2px solid #d1d5db;
+    background: #f5f5f5;
+    color: #333;
+    font-size: 16px;
+    font-family: "Poppins", sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(42,41,128,0.06);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+  .category-dropdown:focus {
+    border-color: #2a2980;
+    box-shadow: 0 0 0 2px #fbcc34;
+  }
+
+  /* Menu grid */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .menu-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .menu-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .menu-item {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    image-rendering: initial;
+    height: 500px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s;
+    background: white;
+  }
+  .menu-item-content {
+    height: 50%;
+    width: 95%;
+  }
+  .menu-item:hover {
+    transform: translateY(-2px);
+  }
+  .menu-item-image {
+    width: 100%;
+    height: 50px;
+    object-fit: f;
+    border-radius: 8px 8px 0 0;
+  }
+  .menu-item-title {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    /* Limit to 2 lines */
+    /* display: -webkit-box; */
+    /* -webkit-line-clamp: 2; */
+    /* -webkit-box-orient: vertical; */
+    /* overflow: hidden; */
+  }
+
+  .menu-item-description {
+    margin: 0 0 12px 0;
+    color: #666;
+    font-size: 11px !important;
+    line-height: 1.4;
+    /* Limit to 3 lines */
+    /* display: -webkit-box; */
+    /* -webkit-line-clamp: 3; */
+    /* -webkit-box-orient: vertical; */
+    /* overflow: hidden; */
+  }
+
+  .menu-item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+  }
+
+  .menu-item-price {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2a2980;
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quantity-button {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .decrease-button {
+    background-color: #f5f5f5;
+  }
+
+  .decrease-button:hover {
+    background: #eee;
+  }
+
+  .increase-button {
+    background-color: #2a2980;
+    color: #fff;
+  }
+
+  .increase-button:hover {
+    background: #1f1f60;
+  }
+</style>
+
+<style>
+  /* Custom category dropdown styles */
+  .category-dropdown-trigger {
+    width: 220px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    background: #fff;
+    color: #333;
+    font-size: 16px;
+    font-family: "Poppins", sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(42,41,128,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+  .category-dropdown-arrow {
+    margin-left: 10px;
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .category-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    margin-top: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .category-dropdown-content.show {
+    display: block;
+    animation: categoryDropdownFadeIn 0.2s ease-out;
+  }
+  @keyframes categoryDropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .category-dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: #333;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s;
+  }
+  .category-dropdown-item:hover {
+    background: #f5f5f5;
+  }
+  .category-dropdown-item.active {
+    background: #2a2980;
+    color: white;
+  }
+  .category-dropdown-item:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  .category-dropdown-item:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+</style>
+
+
+<style>
+  .logout-btn {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+    background: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .logout-btn:hover {
+    background: #f5f5f5;
+    color: #2a2980;
+  }
+</style>
+
+<style>
+.menu-item .menu-item-content {
+  padding-left: 18px !important;
+  padding-right: 8px !important;
+  box-sizing: border-box !important;
+  background: none !important;
+}
+
+/* Fix image styling to prevent squishing */
+.menu-item img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  display: block;
+}
+
+.menu-item {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.menu-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.menu-item-content {
+  padding: 12px;
+}
+
+.menu-item-title {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.menu-item-description {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.price-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.price {
+  font-weight: 600;
+  color: #2a2980;
+  font-size: 14px;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quantity-control button {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.quantity-control .minus {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.quantity-control .minus:hover {
+  background-color: #e0e0e0;
+}
+
+.quantity-control .plus {
+  background-color: #2a2980;
+  color: white;
+}
+
+.quantity-control .plus:hover {
+  background-color: #1f1f60;
+}
+
+.quantity-control .quantity {
+  font-weight: 600;
+  color: #333;
+  min-width: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+</style>
+
+<style>
+  /* Category dropdown styles */
+  .categories-container {
+    padding: 0 16px 16px 16px;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .categories-nav {
+    position: relative;
+    z-index: 1000;
+  }
+
+  .category-dropdown-trigger {
+    width: 220px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .category-dropdown-trigger:hover {
+    border-color: #2a2980;
+    box-shadow: 0 4px 12px rgba(42, 41, 128, 0.1);
+  }
+
+  .category-dropdown-trigger:focus {
+    border-color: #2a2980;
+    box-shadow: 0 0 0 3px rgba(42, 41, 128, 0.1);
+  }
+
+  .category-dropdown-arrow {
+    margin-left: 8px;
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.2s ease;
+  }
+
+  .category-dropdown-trigger.active .category-dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .category-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 1001;
+    margin-top: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    animation: dropdownFadeIn 0.2s ease-out;
+  }
+
+  .category-dropdown-content.show {
+    display: block;
+  }
+
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .category-dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: #333;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .category-dropdown-item:last-child {
+    border-bottom: none;
+  }
+
+  .category-dropdown-item:hover {
+    background: #f8f9fa;
+    color: #2a2980;
+  }
+
+  .category-dropdown-item.active {
+    background: #2a2980;
+    color: white;
+    font-weight: 600;
+  }
+
+  .category-dropdown-item:first-child {
+    border-radius: 6px 6px 0 0;
+  }
+
+  .category-dropdown-item:last-child {
+    border-radius: 0 0 6px 6px;
+  }
+
+  /* Scrollbar styling for dropdown */
+  .category-dropdown-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .category-dropdown-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  .category-dropdown-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  .category-dropdown-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+</style>
+
+<style>
+  .history-btn {
+    background: #fff;
+    color: #2a2980;
+    border: 1px solid #2a2980;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .history-btn:hover {
+    background: #2a2980;
+    color: #fff;
+  }
+</style>
+
+<style>
+  .rate-btn-small {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "Poppins", sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 18px auto 0 auto;
+    display: block;
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.18);
+    position: relative;
+    overflow: hidden;
+  }
+  .rate-btn-small:hover {
+    background: linear-gradient(135deg, #ee5a24, #ff6b6b);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 107, 107, 0.22);
+  }
+  .rate-btn-small:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(255, 107, 107, 0.15);
+  }
+</style>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    
+    <style>
+        body {
+            background: linear-gradient(to bottom, #2a2980, white) no-repeat;
+            background-attachment: fixed; 
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 1; 
+        }
+        h1 {
+            text-align: center;
+            top:30px;
+        }
+        #form-container {
+            max-width: 374px;
+            top: 50px;
+            position: absolute;
+            margin-top: 0 auto 40px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5745a0;
+        }
+        .menu-items {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+        }
+        .menu-item button {
+            background-color: #f44336;
+        }
+        .menu-item button:hover {
+            background-color: #d32f2f;
+        }
+        .rating-group { margin-bottom: 1em; }
+        .rating-label { font-weight: bold; }
+        .comment-box { background: #f4f4f4; padding: 1em; border-radius: 8px; }
+
+        #item-description {
+            width: 98%;
+            height: 60px;
+        }
+        .cat-checkboxes {
+            max-height: 180px;      /* or any height you prefer */
+            overflow-y: auto;       /* enables vertical scrolling */
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="menu-management" id="form-container">
+       
+        <button onclick="window.location.href='menu-popular.html'" style="margin-bottom: 20px;">← Go Back to Menu</button>
+        <h2>Manage Menu Items</h2>
+      
+        <!-- Form to add new items -->
+        <form id="add-item-form">
+            <input type="text" id="item-name" name="name" placeholder="Name" required>
+            <input type="number" id="item-price" name="price" placeholder="Price" required>
+            <input type="text" id="item-image" name="image" placeholder="Image URL">
+            <textarea id="item-description" name="description" placeholder="Description of the Dish"></textarea>
+            <label>Categories:</label>
+            <details style="margin-bottom:10px;">
+                <summary class="cat-summary">Select Categories</summary>
+                <div id="item-categories" class="cat-checkboxes">
+                    <label><input type="checkbox" name="categories" value="Popular"> Popular</label>
+                    <label><input type="checkbox" name="categories" value="Noodles"> Noodles</label>
+                    <label><input type="checkbox" name="categories" value="Congee"> Congee</label>
+                    <label><input type="checkbox" name="categories" value="Soups"> Soups</label>
+                    <label><input type="checkbox" name="categories" value="Fried Rice"> Fried Rice</label>
+                    <label><input type="checkbox" name="categories" value="Signature Dishes"> Signature Dishes</label>
+                    <label><input type="checkbox" name="categories" value="Rice Meals"> Rice Meals</label>
+                    <label><input type="checkbox" name="categories" value="Chicken"> Chicken</label>
+                    <label><input type="checkbox" name="categories" value="Fish"> Fish</label>
+                    <label><input type="checkbox" name="categories" value="Vegetarian"> Vegetarian</label>
+                    <label><input type="checkbox" name="categories" value="Pork"> Pork</label>
+                    <label><input type="checkbox" name="categories" value="Hotpot"> Hotpot</label>
+                    <label><input type="checkbox" name="categories" value="Dimsum"> Dimsum</label>
+                    <label><input type="checkbox" name="categories" value="Dessert"> Dessert</label>
+                    <label><input type="checkbox" name="categories" value="Drinks"> Drinks</label>
+                </div>
+            </details>
+            <button type="submit">Add Item</button>
+        </form>
+        <form>
+            <label for="maxTableInput">Maximum Table Number:</label>
+            <input type="number" id="maxTableInput" min="1" />
+            <button onclick="saveTableLimits()">Save Limit</button>
+        </form>
+      
+        <!-- List of existing items -->
+        <div id="menu-list">
+          <!-- Menu items will be dynamically inserted here -->
+        </div>
+        <div class="menu-items" id="menuItems"></div>
+        <button onclick="restoreOriginalMenu(); setTimeout(() => location.reload(), 200);">Restore Original Menu</button>
+        <h1>Latest User Feedback</h1>
+        <h2>Order History</h2>
+        <div id="order-history"></div>
+
+        <div id="ratingDisplay"></div>
+      </div>
+      
+          ...
+    <div id="order-history"></div>
+    <div id="ratingDisplay"></div>
+  </div>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>
+
