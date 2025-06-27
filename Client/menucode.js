@@ -2,7 +2,8 @@ const state = {
   selectedCategory: "Popular",
   searchQuery: "",
   menuItems: [],
-  categories: []
+  categories: [],
+  orderItems: [] 
 }
 
 window.menuItems = [];
@@ -103,8 +104,6 @@ function loadDefaultMenu() {
   renderMenuItems();
 }
 
-// Initialize menu on page load
-loadMenuFromDatabase();
 
 // Debug: Log loaded menu items
 console.log('[DEBUG] Loaded menuItems from localStorage:', state.menuItems);
@@ -271,15 +270,9 @@ function renderMenuItems() {
           <div class="price-controls">
             <span class="price">₱${displayPrice}</span>
             <div class="quantity-control">
-              <button class="minus"
-                onclick="updateQuantity('${item.id}', -1)"
-                ${item.soldOut ? 'disabled' : ''}>-
-              </button>
+              <button class="minus" onclick="updateQuantity('${item.id}',-1)">−</button>
               <span class="quantity">${item.quantity}</span>
-              <button class="plus"
-                onclick="updateQuantity('${item.id}', 1)"
-                ${item.soldOut ? 'disabled' : ''}>+
-              </button>
+              <button class="plus"  onclick="updateQuantity('${item.id}',1)">+</button>
             </div>
           </div>
           ${item.soldOut ? '<div style="color:#ff4444;font-weight:bold;">Sold Out</div>' : ''}
