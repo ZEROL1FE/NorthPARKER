@@ -594,6 +594,10 @@
             <div class="form-group">
               <label for="item-image">Image:</label>
               <input type="file" id="item-image" name="image" accept="image/*" required>
+              <label>Image URL (optional):
+                <input type="url" id="item-image-url" placeholder="https://…">
+              </label>
+              <small>Add either a file *or* a URL.</small>
               <div id="image-preview" class="image-preview"></div>
             </div>
             <div class="form-group">
@@ -606,7 +610,7 @@
           </div>
           <button type="submit" class="add-btn">Add Item</button>
         </form>
-        <button onclick="restoreDefaultMenu()" class="delete-btn">Restore Default Menu</button>
+        <button type="button" onclick="restoreDefaultMenu()" class="delete-btn">Restore Default Menu</button>
       </div>
     </div>
 
@@ -779,6 +783,7 @@
         document.getElementById('edit-item-image').value = item.image;
         document.getElementById('edit-item-soldout').checked = !!item.soldOut;
         document.getElementById('editModal').style.display = 'flex';
+        
       }
       function hideEditModal() {
         document.getElementById('editModal').style.display = 'none';
@@ -955,6 +960,14 @@
         if (e.target.classList.contains('edit-btn')) {
           const id = String(e.target.getAttribute('data-id'));
           if (window.editMenuItem) window.editMenuItem(id);
+          await fetch(`${API_BASE}/menu/${id}`, {
+            method : "PUT",
+            headers: { "Content-Type":"application/json", ...authHeader() },
+            body   : JSON.stringify({
+              name, price, description, categories, image,
+              soldOut : document.getElementById("edit-item-soldout").checked
+            })
+          });
         }
         // Delete button
         if (e.target.classList.contains("delete-btn")) {
@@ -1101,9 +1114,6 @@
       if (feedbackTab && feedbackTab.classList.contains('active')) {
         renderFeedbacks();
       }
-      if (!item.image.startsWith("http") &&
-        !item.image.startsWith("data:image/"))
-      return res.status(400).json({ error:"Invalid image format" });
     });
   </script>
 </body>
