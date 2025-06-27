@@ -271,9 +271,15 @@ function renderMenuItems() {
           <div class="price-controls">
             <span class="price">₱${displayPrice}</span>
             <div class="quantity-control">
-              <button class="minus" onclick="updateQuantity(${item.id}, -1)" ${item.soldOut ? 'disabled' : ''}>-</button>
+              <button class="minus"
+                onclick="updateQuantity('${item.id}', -1)"
+                ${item.soldOut ? 'disabled' : ''}>-
+              </button>
               <span class="quantity">${item.quantity}</span>
-              <button class="plus" onclick="updateQuantity(${item.id}, 1)" ${item.soldOut ? 'disabled' : ''}>+</button>
+              <button class="plus"
+                onclick="updateQuantity('${item.id}', 1)"
+                ${item.soldOut ? 'disabled' : ''}>+
+              </button>
             </div>
           </div>
           ${item.soldOut ? '<div style="color:#ff4444;font-weight:bold;">Sold Out</div>' : ''}
