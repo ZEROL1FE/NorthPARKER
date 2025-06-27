@@ -7,7 +7,7 @@ if (!token) {
 
 async function fetchOrderHistory() {
   try {
-    const res = await fetch('http://localhost:5000/orders', {
+    const res = await fetch('https://northparker.onrender.com/orders', {
       headers: {
         Authorization: `Bearer ${token}`
       }
