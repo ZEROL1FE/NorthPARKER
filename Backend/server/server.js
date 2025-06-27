@@ -174,6 +174,8 @@ const menuSchema = new mongoose.Schema({
   // imageUrl: String    // external url if you later move to Cloudinary/S3
 });
 
+const Menu = mongoose.model("Menu", menuSchema);
+
 const ratingSchema = new mongoose.Schema(
   {
     userId   : { type: mongoose.Schema.Types.ObjectId, ref: "User" },
