@@ -458,17 +458,25 @@ window.updateQuantity = function (id, increment) {
 };
 
 window.handleCheckout = async function () {
-  if (state.orderItems.length === 0) return alert("Add items first.");
-
-  const tableNum = Number(document.getElementById("tableNumber").value);
-  if (!tableNum || isNaN(tableNum)) {
-    alert("Enter a valid table number"); return;
+  if (state.orderItems.length === 0) {
+    alert("Add items first."); return;
   }
 
+  /* ---- 1. validate table # ---- */
+  const tblInp   = document.getElementById("tableNumber");
+  const tableNum = Number(tblInp?.value);
+  const { min = 1, max = 20 } = JSON.parse(localStorage.getItem("tableLimits") || "{}");
+
+  if (!tableNum || isNaN(tableNum) || tableNum < min || tableNum > max) {
+    alert(`Enter a table number between ${min} and ${max}`);
+    return;
+  }
+
+  /* ---- 2. build payload ---- */
   const payload = {
     table : tableNum,
     items : state.orderItems.map(({ id, name, price, quantity }) => ({
-      menuId  : id, name, price, quantity
+      menuId: id, name, price, quantity
     })),
     status: "pending"
   };
@@ -484,19 +492,23 @@ window.handleCheckout = async function () {
     });
 
     if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error || "Order failed");
+      // server may return { error:"…" }
+      const { error = "Order failed" } = await res.json();
+      throw new Error(error);
     }
-    const saved = await res.json();   // { _id, … }
 
-    localStorage.setItem("lastOrderId", saved._id); 
+    /* ---- 3. server replied OK -> save order locally ---- */
+    const order = await res.json();          // { _id, … }
+    localStorage.setItem("lastOrder", JSON.stringify(order));
 
-    alert("Order placed! #" + saved._id);
-    // reset UI
+    /* ---- 4. clear UI cart ---- */
     state.orderItems = [];
     window.menuItems.forEach(it => (it.quantity = 0));
-    renderMenuItems(); renderOrderItems();
-    toggleOrderForm();
+    renderMenuItems();
+    renderOrderItems();
+
+    /* ---- 5. go to payment page ---- */
+    window.location.href = `payment.html?id=${order._id}`;
 
   } catch (err) {
     console.error(err);
