@@ -148,7 +148,7 @@ const menuSchema = new mongoose.Schema({
   soldOut    : { type: Boolean, default: false }
 });
 
-const Menu = mongoose.model("Menu", menuSchema);
+const Menu = mongoose.model("Menu", menuSchema, "menu");
 
 const ratingSchema = new mongoose.Schema(
   {
