@@ -716,6 +716,29 @@
         throw new Error(error || "Save failed");
       }
     }
+    async function restoreDefaultMenu() {
+      if (!confirm("Are you sure? This will erase all current menu items.")) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/menu/reset-default`, {
+          method: "POST",
+          headers: authHeader()
+        });
+
+        if (!res.ok) {
+          const { error } = await res.json();
+          throw new Error(error || "Unknown error");
+        }
+
+        alert("Menu has been restored to default.");
+        await loadMenuFromDatabase(); // make sure this is defined elsewhere
+        renderMenuItems?.();
+
+      } catch (err) {
+        console.error("Restore failed:", err);
+        alert("Restore failed: " + err.message);
+      }
+    }
     
     document.addEventListener('DOMContentLoaded', async function() {
       // Log menuItems to verify global access
