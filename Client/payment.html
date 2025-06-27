@@ -233,14 +233,14 @@
         <div class='receipt-table'>Table Number: <b>${order.table}</b></div>
         <div class='receipt-list'>`;
       let total = 0;
-      order.items.forEach(it => {
-        const qty = item.quantity ?? 0;
-        const sub = item.price * qty;
+      order.items.forEach(item => {
+        const sub = item.price * item.quantity;
         total += sub;
-        html += `<div class='receipt-row'>
-          <span>${item.name} x${qty}</span>
-          <span>₱${sub.toFixed(2)}</span>
-        </div>`;
+        html += `
+          <div class='receipt-row'>
+            <span>${item.name} x${item.quantity}</span>
+            <span>₱${sub.toFixed(2)}</span>
+          </div>`;
       });
       html += `</div>
         <div class='receipt-total-row'><span>Total</span>

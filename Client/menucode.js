@@ -473,7 +473,7 @@ window.handleCheckout = async function () {
   /* ---- 2. build payload ---- */
   const payload = {
     table : tableNum,
-    items : state.orderItems.map(({ id, name, price, quantity }) => ({
+    items: state.orderItems.map(({ id, name, price, quantity }) => ({
       menuId: id, name, price, quantity
     })),
     status: "pending"

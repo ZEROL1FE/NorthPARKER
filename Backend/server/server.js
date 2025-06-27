@@ -50,7 +50,11 @@ const orderSchema = new mongoose.Schema(
     table  : Number,
     userEmail: String,
     userName : String,
-    items  : [{ name: String, qty: Number, price: Number }],
+    items  : [{ 
+      name: String,
+      quantity: Number,
+      price: Number 
+              }],
     status : { type: String, default: "pending" },
 
     // 🆕 payment info
@@ -189,11 +193,11 @@ app.post("/ratings", authRequired, async (req, res) => {
 // ───── Protected order routes ─────
 
 
-app.get("/orders/:id", authRequired, async (req,res)=>{
-  const doc = await Order.findById(req.params.id);
-  if (!doc) return res.status(404).json({ error:"Not found" });
-  res.json(doc);
-});
+app.get("/orders/:id", authRequired, asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  res.json(order);
+}));
 
 app.post("/orders", authRequired, async (req, res) => {
   const newOrder = await Order.create({
