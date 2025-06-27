@@ -57,7 +57,6 @@ async function loadMenuFromDatabase() {
   } catch (err) {
     console.error("Menu load error → showing empty menu", err);
     window.menuItems = [];
-    syncStateMenuItems();
     renderCategories();
     renderMenuItems();
   }
@@ -71,43 +70,14 @@ function syncStateMenuItems() {
 }
 
 // Save menuItems to localStorage
-function saveMenuItems() {
-  localStorage.setItem("menuItems", JSON.stringify(window.menuItems));
-  syncStateMenuItems();
-}
+
 
 // Display menu items in grid (deprecated, use renderMenuItems)
 function displayMenuItems() { /* deprecated, do nothing */ }
 
 
 // Load menu from admin database
-function loadMenuFromDatabase() {
-  try {
-    const adminMenu = JSON.parse(localStorage.getItem("menuItems")) || [];
-    if (adminMenu.length > 0) {
-      // Use admin menu if available
-      window.menuItems = adminMenu;
-      syncStateMenuItems();
-      // Extract unique categories from menu items
-      const allCategories = new Set();
-      adminMenu.forEach(item => {
-        if (item.categories && Array.isArray(item.categories)) {
-          item.categories.forEach(cat => allCategories.add(cat));
-        }
-      });
-      state.categories = Array.from(allCategories).sort();
-      console.log("Loaded menu from admin database:", adminMenu.length, "items");
-      console.log("Available categories:", state.categories);
-    } else {
-      // Fallback to default menu if admin database is empty
-      loadDefaultMenu();
-      console.log("Admin database empty, using default menu");
-    }
-  } catch (error) {
-    console.error("Error loading menu from database:", error);
-    loadDefaultMenu();
-  }
-}
+
 
 // Load default menu (fallback)
 function loadDefaultMenu() {
