@@ -70,6 +70,36 @@ const settingsSchema = new mongoose.Schema({
 
 const Settings = mongoose.model('Settings', settingsSchema);
 
+const menuSchema = new mongoose.Schema({
+  name       : String,
+  description: String,
+  price      : Number,
+  categories : [String],
+  soldOut    : { type: Boolean, default: false },
+
+  // NEW — keep one of the two:
+  imageData  : String,   // base-64 payload (recommended for this project) OR
+  // imageUrl: String    // external url if you later move to Cloudinary/S3
+});
+
+const Menu = mongoose.model("Menu", menuSchema);
+
+const ratingSchema = new mongoose.Schema(
+  {
+    userId   : { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    userName : String,                // display name or email
+    ratings  : {                      // each 0-5
+      food    : Number,
+      service : Number,
+      overall : Number
+    },
+    comments : String,
+  },
+  { timestamps: true }
+);
+
+const Rating = mongoose.model("Rating", ratingSchema);
+
 // ───── Auth middleware ─────
 
 function authRequired(req, res, next) {
@@ -162,35 +192,7 @@ app.post("/ratings", authRequired, async (req, res) => {
 
 // ───── Protected order routes ─────
 
-const menuSchema = new mongoose.Schema({
-  name       : String,
-  description: String,
-  price      : Number,
-  categories : [String],
-  soldOut    : { type: Boolean, default: false },
 
-  // NEW — keep one of the two:
-  imageData  : String,   // base-64 payload (recommended for this project) OR
-  // imageUrl: String    // external url if you later move to Cloudinary/S3
-});
-
-const Menu = mongoose.model("Menu", menuSchema);
-
-const ratingSchema = new mongoose.Schema(
-  {
-    userId   : { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    userName : String,                // display name or email
-    ratings  : {                      // each 0-5
-      food    : Number,
-      service : Number,
-      overall : Number
-    },
-    comments : String,
-  },
-  { timestamps: true }
-);
-
-const Rating = mongoose.model("Rating", ratingSchema);
 
 
 app.post("/orders", authRequired, async (req, res) => {
