@@ -274,26 +274,6 @@ app.patch("/orders/:id/pay", authRequired, async (req, res) => {
   res.json(order);
 });
 
-//route for default menu
-const fs = require("fs");
-
-app.post("/menu/reset-default", authRequired, adminOnly, async (req, res) => {
-  try {
-    const filePath = path.join(__dirname, "../seed/defaultMenu.json");
-    const defaultData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-
-    // Clear current menu
-    await Menu.deleteMany({});
-    // Insert new defaults
-    await Menu.insertMany(defaultData);
-
-    res.json({ success: true, message: "Menu reset to default." });
-  } catch (err) {
-    console.error("Error resetting menu:", err);
-    res.status(500).json({ error: "Failed to reset menu" });
-  }
-});
-
 // ───── Startup ─────
 
 app.listen(PORT, '0.0.0.0', () => {
