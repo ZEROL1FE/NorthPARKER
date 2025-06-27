@@ -175,7 +175,7 @@
   <script>
     const API_BASE = "https://northparker.onrender.com";
 
-    /* helpers ----------------------------------------------------------------- */
+    /* helpers ---------------------------------------------------- */
     function getSession() {
       try { return JSON.parse(localStorage.getItem("session") || "{}"); }
       catch { return {}; }
@@ -185,35 +185,31 @@
       return token ? { Authorization: "Bearer " + token } : {};
     }
     function redirectHome(msg) {
-      alert(msg || "No active order.");      // subtle but clear UX
+      alert(msg || "No active order.");
       window.location.href = "client-side.html";
     }
 
-    /* read ?id=XYZ from the URL ------------------------------------------------ */
-    const params   = new URLSearchParams(location.search);
-    const orderId  = params.get("id");
+    /* read ?id=XYZ ---------------------------------------------- */
+    const params  = new URLSearchParams(location.search);
+    const orderId = params.get("id");
     if (!orderId) redirectHome();
 
-    /* order state we’ll fill in later ----------------------------------------- */
-    let orderDoc   = null;
-    let selectedPM = null;       // 'cash' | 'gcash' | 'card'
+    /* globals we’ll fill ---------------------------------------- */
+    let orderDoc   = null;            // order fetched from server
+    let selectedPM = null;            // cash | gcash | card
 
-    /* grab the order from the server ------------------------------------------ */
+    /* fetch that order ------------------------------------------ */
     async function loadOrder() {
       try {
         const r = await fetch(`${API_BASE}/orders/${orderId}`, {
           headers: authHeader()
         });
-        if (r.status === 401) {
-          redirectHome("Please log-in again.");
-          return;
-        }
-        if (r.status === 404) {
-          redirectHome("Order not found.");
-          return;
-        }
+        if (r.status === 401) return redirectHome("Please log-in again.");
+        if (r.status === 404) return redirectHome("Order not found.");
+
         orderDoc = await r.json();
         renderReceipt(orderDoc);
+
         if (orderDoc.paymentStatus === "paid") {
           document.getElementById("payNowBtn").disabled = true;
           alert("This order is already paid.");
@@ -224,35 +220,44 @@
       }
     }
 
-    /* build the receipt UI ---------------------------------------------------- */
-    function renderReceipt(o) {
-      const el = document.getElementById("receiptContainer");
-      const rows = o.items.map(
-        it => `<div class="receipt-row"><span>${it.name} ×${it.quantity}</span>
-              <span>₱${(it.price*it.quantity).toFixed(2)}</span></div>`
-      ).join("");
-      const total = o.items.reduce((s,it)=>s+it.price*it.quantity,0).toFixed(2);
-
-      el.innerHTML = `
-        <h2>Receipt #${o._id.slice(-6)}</h2>
-        <p>Table <b>${o.table}</b> — ${new Date(o.createdAt).toLocaleString()}</p>
-        <div class="receipt-list">${rows}</div>
-        <div class="receipt-total-row"><span>Total</span><span>₱${total}</span></div>
-      `;
+    /* build receipt --------------------------------------------- */
+    function renderReceipt(order) {
+      const c = document.getElementById("receiptContainer");
+      if (!order?.items?.length) {
+        c.innerHTML = `<div class='empty-receipt'>No items.<br>
+          <a href='client-side.html'>Return to menu</a></div>`;
+        return;
+      }
+      let html = `
+        <div class='receipt-title'>Order Receipt</div>
+        <div class='receipt-table'>Table Number: <b>${order.table}</b></div>
+        <div class='receipt-list'>`;
+      let total = 0;
+      order.items.forEach(it => {
+        const sub = it.price * (it.quantity ?? it.qty ?? 0);
+        total += sub;
+        html += `<div class='receipt-row'>
+          <span>${it.name} x${it.quantity ?? it.qty}</span>
+          <span>₱${sub.toFixed(2)}</span></div>`;
+      });
+      html += `</div>
+        <div class='receipt-total-row'><span>Total</span>
+          <span>₱${total.toFixed(2)}</span></div>`;
+      c.innerHTML = html;
     }
 
-    /* payment-option click logic --------------------------------------------- */
+    /* choose payment -------------------------------------------- */
     document.querySelectorAll(".payment-option").forEach(opt=>{
       opt.addEventListener("click", ()=>{
         document.querySelectorAll(".payment-option")
                 .forEach(o=>o.classList.remove("selected"));
         opt.classList.add("selected");
-        selectedPM = opt.dataset.method;           // cash | gcash | card
+        selectedPM = opt.dataset.method;
         document.getElementById("payNowBtn").disabled = false;
       });
     });
 
-    /* submit payment ---------------------------------------------------------- */
+    /* confirm payment ------------------------------------------- */
     document.getElementById("payNowBtn").addEventListener("click", async ()=>{
       if (!selectedPM || !orderDoc) return;
 
@@ -262,25 +267,21 @@
           headers: { "Content-Type":"application/json", ...authHeader() },
           body   : JSON.stringify({ method: selectedPM })
         });
-
         if (!r.ok) {
           const { error = "Payment failed" } = await r.json();
           throw new Error(error);
         }
-
-        /* success */
-        alert("Payment recorded. Thank you!");
-        localStorage.removeItem("lastOrder");      // not needed any more
+        alert(`Payment method "${selectedPM}" saved. Thank you!`);
         window.location.href = "client-side.html";
-
       } catch (err) {
         console.error(err);
         alert(err.message);
       }
     });
 
-    /* kick things off --------------------------------------------------------- */
+    /* kick things off ------------------------------------------- */
     loadOrder();
+
   </script>
 </body>
 </html> 

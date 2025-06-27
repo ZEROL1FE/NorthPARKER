@@ -76,7 +76,6 @@ function syncStateMenuItems() {
   state.menuItems = window.menuItems;
 }
 
-// Save menuItems to localStorage
 
 
 // Display menu items in grid (deprecated, use renderMenuItems)
@@ -115,7 +114,6 @@ function loadDefaultMenu() {
 console.log('[DEBUG] Loaded menuItems from localStorage:', state.menuItems);
 
 // Get table limits from localStorage
-const tableLimits = JSON.parse(localStorage.getItem('tableLimits')) || { min: 1, max: 20 };
 
 // Filter menu items based on search query
 function getFilteredMenuItems() {

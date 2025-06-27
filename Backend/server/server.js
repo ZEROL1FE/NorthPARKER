@@ -189,7 +189,11 @@ app.post("/ratings", authRequired, async (req, res) => {
 // ───── Protected order routes ─────
 
 
-
+app.get("/orders/:id", authRequired, async (req,res)=>{
+  const doc = await Order.findById(req.params.id);
+  if (!doc) return res.status(404).json({ error:"Not found" });
+  res.json(doc);
+});
 
 app.post("/orders", authRequired, async (req, res) => {
   const newOrder = await Order.create({
