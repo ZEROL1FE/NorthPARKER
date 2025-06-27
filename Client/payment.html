@@ -234,11 +234,13 @@
         <div class='receipt-list'>`;
       let total = 0;
       order.items.forEach(it => {
-        const sub = it.price * (it.quantity ?? it.qty ?? 0);
+        const qty = item.quantity ?? 0;
+        const sub = item.price * qty;
         total += sub;
         html += `<div class='receipt-row'>
-          <span>${it.name} x${it.quantity ?? it.qty}</span>
-          <span>₱${sub.toFixed(2)}</span></div>`;
+          <span>${item.name} x${qty}</span>
+          <span>₱${sub.toFixed(2)}</span>
+        </div>`;
       });
       html += `</div>
         <div class='receipt-total-row'><span>Total</span>
