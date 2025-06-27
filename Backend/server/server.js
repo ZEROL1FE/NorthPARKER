@@ -48,6 +48,8 @@ const User = mongoose.model("User", userSchema);
 const orderSchema = new mongoose.Schema(
   {
     table  : Number,
+    userEmail: String,
+    userName : String,
     items  : [{ name: String, qty: Number, price: Number }],
     status : { type: String, default: "pending" },
 
@@ -60,6 +62,7 @@ const orderSchema = new mongoose.Schema(
 const Order = mongoose.model("Order", orderSchema);
 
 // ───── Auth middleware ─────
+
 function authRequired(req, res, next) {
   const hdr   = req.headers.authorization || "";
   const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : null;
@@ -75,6 +78,16 @@ function authRequired(req, res, next) {
     res.status(401).json({ error: "Invalid / expired token" });
   }
 }
+
+const asyncHandler = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
+
+function adminOnly(req, res, next) {
+  if (req.user?.role !== 'admin')
+    return res.status(403).json({ error: 'Admins only' });
+  next();
+}
+
 app.post("/auth/signup", async (req, res) => {
   const { email, password, name } = req.body;
 
@@ -168,7 +181,11 @@ const Rating = mongoose.model("Rating", ratingSchema);
 
 
 app.post("/orders", authRequired, async (req, res) => {
-  const newOrder = await Order.create(req.body);
+  const newOrder = await Order.create({
+    ...req.body,
+    userEmail: req.user?.email || "",
+    userName : req.user?.name  || "",
+  });
   res.status(201).json(newOrder);
 });
 
@@ -180,27 +197,30 @@ app.get("/menu", async (_, res) => {
   const menu = await Menu.find().sort({ name: 1 });
   res.json(menu);
 });
-app.post("/menu", authRequired, async (req, res) => {
-  // ⚠️ You may want to restrict this to role === "admin".
+app.post('/menu', authRequired, adminOnly, asyncHandler(async (req, res) => {
+  const { name, price } = req.body;
+  if (!name || !price) return res.status(400).json({ error: 'name & price required' });
+
   const doc = await Menu.create(req.body);
   res.status(201).json(doc);
-});
+}));
 
 // Update an item by id    (PUT /menu/:id)
-app.put("/menu/:id", authRequired, async (req, res) => {
-  const doc = await Menu.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-  if (!doc) return res.status(404).json({ error: "Item not found" });
-  res.json(doc);
-});
+app.put('/menu/:id', authRequired, adminOnly,
+  asyncHandler(async (req, res) => {
+    const updated = await Menu.findByIdAndUpdate(req.params.id, req.body,
+                     { new:true, runValidators:true });
+    if (!updated) return res.status(404).json({ error:'Item not found' });
+    res.json(updated);
+}));
 
 // Delete an item by id    (DELETE /menu/:id)
-app.delete("/menu/:id", authRequired, async (req, res) => {
-  const doc = await Menu.findByIdAndDelete(req.params.id);
-  if (!doc) return res.status(404).json({ error: "Item not found" });
-  res.json({ success: true });
-});
+app.delete('/menu/:id', authRequired, adminOnly,
+  asyncHandler(async (req, res) => {
+    const deleted = await Menu.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error:'Item not found' });
+    res.json({ success:true });
+}));
 
 // --- route to mark an order as paid ---
 app.patch("/orders/:id/pay", authRequired, async (req, res) => {

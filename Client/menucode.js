@@ -530,16 +530,26 @@ window.logout = function () {
 
 // Update all admin actions to call saveMenuItems and renderMenuItems after changes
 // Example for soldout-btn (already present):
-document.addEventListener('click', function(e) {
+document.addEventListener('click', (e) => {
   if (e.target.classList.contains('soldout-btn')) {
-    const id = Number(e.target.getAttribute('data-id'));
-    const idx = window.menuItems.findIndex(item => item.id === id);
+    const id  = String(e.target.getAttribute('data-id'));   
+    const idx = window.menuItems.findIndex(
+      (item) => String(item.id) === id                      
+    );
+
     if (idx !== -1) {
       window.menuItems[idx].soldOut = !window.menuItems[idx].soldOut;
-      saveMenuItems();
-      syncStateMenuItems(); // Ensure state.menuItems is updated
+
+      // TODO: if you later persist to MongoDB, call a REST PATCH here instead
+      saveMenuItems();         
+      syncStateMenuItems();     
       renderMenuItems();
-      alert(window.menuItems[idx].soldOut ? 'Item marked as Sold Out.' : 'Item is now available.');
+
+      alert(
+        window.menuItems[idx].soldOut
+          ? 'Item marked as Sold Out.'
+          : 'Item is now available.'
+      );
     }
   }
 });

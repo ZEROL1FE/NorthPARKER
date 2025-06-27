@@ -44,7 +44,7 @@ function filterOrders(orders, search, payment) {
   });
 }
 
-function renderAllOrders() {
+async function renderAllOrders() {
   if (!localStorage.getItem('session')) {
       alert('You must be logged in to access this page.');
       window.location.href = 'login.html';
@@ -54,7 +54,13 @@ function renderAllOrders() {
     return;
   }
   const container = document.getElementById('ordersTableContainer');
-  const orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
+  const session = JSON.parse(localStorage.getItem("session"));
+  const res = await fetch(`${API_BASE}/orders`, {
+    headers: {
+      Authorization: `Bearer ${session?.token || ""}`
+    }
+  });
+  const orderHistory = await res.json();
   const search = document.getElementById('searchInput')?.value || '';
   const payment = document.getElementById('paymentFilter')?.value || '';
   const filteredOrders = filterOrders(orderHistory, search, payment);
@@ -98,7 +104,11 @@ function renderAllOrders() {
       <td>₱${order.total.toFixed(2)}</td>
       <td>${paymentLabel || '<i>Not set</i>'}</td>
       <td>
-        <button class="delete-order-btn" data-order-idx="${orderHistory.indexOf(order)}" style="background:#ff4444;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;">Delete</button>
+        <button class="delete-order-btn"
+                data-order-id="${order._id}"
+                style="background:#ff4444;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;">
+          Delete
+        </button>
       </td>
     </tr>`;
   });
@@ -106,20 +116,41 @@ function renderAllOrders() {
   container.innerHTML = table;
 
   // Add delete button event listeners
-  container.querySelectorAll('.delete-order-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      if (!confirm('Delete this order?')) return;
-      let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
-      const idx = parseInt(this.getAttribute('data-order-idx'), 10);
-      orderHistory.splice(idx, 1);
-      localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
-      renderAllOrders();
+  container.querySelectorAll(".delete-order-btn").forEach(btn => {
+    btn.addEventListener("click", async function () {
+      if (!confirm("Delete this order?")) return;
+
+      const orderId = this.dataset.orderId;
+      const session = JSON.parse(localStorage.getItem("session"));
+
+      try {
+        const res = await fetch(`${API_BASE}/orders/${orderId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${session?.token || ""}` }
+        });
+
+        if (!res.ok) {
+          const { error } = await res.json();
+          throw new Error(error || "Delete failed");
+        }
+
+        alert("Order deleted.");
+        renderAllOrders();        // refresh list
+      } catch (err) {
+        alert("Could not delete: " + err.message);
+      }
     });
   });
 }
 
-function exportOrdersToCSV() {
-  const orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
+async function exportOrdersToCSV() {
+  const session = JSON.parse(localStorage.getItem("session"));
+  const res = await fetch(`${API_BASE}/orders`, {
+    headers: {
+      Authorization: `Bearer ${session?.token || ""}`
+    }
+  });
+  const orderHistory = await res.json();
   const search = document.getElementById('searchInput')?.value || '';
   const payment = document.getElementById('paymentFilter')?.value || '';
   const filteredOrders = filterOrders(orderHistory, search, payment);
