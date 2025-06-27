@@ -82,9 +82,10 @@ function authRequired(req, res, next) {
 const asyncHandler = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 
-function adminOnly(req, res, next) {
-  if (req.user?.role !== 'admin')
-    return res.status(403).json({ error: 'Admins only' });
+function adminOnly (req, res, next) {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ error: "Admins only" });
+  }
   next();
 }
 
@@ -235,6 +236,27 @@ app.patch("/orders/:id/pay", authRequired, async (req, res) => {
   if (!order) return res.status(404).json({ error: "Order not found" });
 
   res.json(order);
+});
+
+//route for default menu
+const fs = require("fs");
+const path = require("path");
+
+app.post("/menu/reset-default", authRequired, adminOnly, async (req, res) => {
+  try {
+    const filePath = path.join(__dirname, "../seed/defaultMenu.json");
+    const defaultData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+
+    // Clear current menu
+    await Menu.deleteMany({});
+    // Insert new defaults
+    await Menu.insertMany(defaultData);
+
+    res.json({ success: true, message: "Menu reset to default." });
+  } catch (err) {
+    console.error("Error resetting menu:", err);
+    res.status(500).json({ error: "Failed to reset menu" });
+  }
 });
 
 // ───── Startup ─────
