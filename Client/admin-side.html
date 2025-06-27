@@ -810,22 +810,39 @@
       window.deleteMenuItem = deleteMenuItem;
 
       // Modal form submit
-      document.getElementById('editItemForm').addEventListener('submit', function(e) {
+      document.getElementById("editItemForm").addEventListener("submit", async e => {
         e.preventDefault();
-        const id = Number(document.getElementById('edit-item-id').value);
-        const idx = window.menuItems.findIndex(item => item.id === id);
-        if (idx !== -1) {
-          window.menuItems[idx].name = document.getElementById('edit-item-name').value;
-          window.menuItems[idx].price = parseFloat(document.getElementById('edit-item-price').value);
-          window.menuItems[idx].description = document.getElementById('edit-item-description').value;
-          window.menuItems[idx].categories = document.getElementById('edit-item-categories').value.split(',').map(s => s.trim()).filter(Boolean);
-          window.menuItems[idx].image = document.getElementById('edit-item-image').value;
-          window.menuItems[idx].soldOut = document.getElementById('edit-item-soldout').checked;
-          
-          if (typeof loadMenuItems === 'function') loadMenuItems();
-          if (typeof displayMenuItems === 'function') displayMenuItems();
-          if (typeof renderMenuItems === 'function') renderMenuItems();
+
+        const id          = document.getElementById("edit-item-id").value;
+        const name        = document.getElementById("edit-item-name").value.trim();
+        const price       = parseFloat(document.getElementById("edit-item-price").value);
+        const description = document.getElementById("edit-item-description").value.trim();
+        const categories  = document
+                              .getElementById("edit-item-categories")
+                              .value.split(",")
+                              .map(s => s.trim())
+                              .filter(Boolean);
+        const image       = document.getElementById("edit-item-image").value.trim();
+        const soldOut     = document.getElementById("edit-item-soldout").checked;
+
+        try {
+          const r = await fetch(`${API_BASE}/menu/${id}`, {
+            method : "PUT",
+            headers: { "Content-Type": "application/json", ...authHeader() },
+            body   : JSON.stringify({ name, price, description, categories, image, soldOut })
+          });
+
+          if (!r.ok) {
+            const { error } = await r.json();
+            throw new Error(error || "Update failed");
+          }
+
+          alert("Item updated!");
           hideEditModal();
+          await loadMenuFromDatabase();   // refresh list → UI reflects DB
+        } catch (err) {
+          console.error(err);
+          alert("Error: " + err.message);
         }
       });
       document.getElementById('cancelEditBtn').addEventListener('click',  function() {
