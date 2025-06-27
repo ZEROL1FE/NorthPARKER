@@ -76,12 +76,8 @@ const menuSchema = new mongoose.Schema({
   price      : Number,
   categories : [String],
   soldOut    : { type: Boolean, default: false },
-
-  // NEW — keep one of the two:
-  imageData  : String,   // base-64 payload (recommended for this project) OR
-  // imageUrl: String    // external url if you later move to Cloudinary/S3
+  image      : String   // <── switch back to this
 });
-
 const Menu = mongoose.model("Menu", menuSchema);
 
 const ratingSchema = new mongoose.Schema(
@@ -217,16 +213,20 @@ app.get("/menu", async (_, res) => {
   const menu = await Menu.find().sort({ name: 1 });
   res.json(menu);
 });
-app.post("/menu", authRequired, async (req, res) => {
-  // optional: adminOnly(req, res, next)
-  const { name, price, description, categories, imageData } = req.body;
+app.post("/menu", authRequired, adminOnly, async (req, res) => {
+  const { name, price, description, categories, image } = req.body;
 
-  if (!imageData?.startsWith("data:image/")) {
-    return res.status(400).json({ error: "imageData must be a base-64 data URL" });
+  if (!image?.startsWith("http")) {
+    return res.status(400).json({ error: "Image must be a valid URL" });
   }
 
   const doc = await Menu.create({
-    name, price, description, categories, imageData, soldOut: false
+    name,
+    price,
+    description,
+    categories,
+    image,
+    soldOut: false
   });
 
   res.status(201).json(doc);

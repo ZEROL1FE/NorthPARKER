@@ -593,9 +593,7 @@
           <div class="form-row">
             <div class="form-group">
               <label for="item-image">Image:</label>
-              <input type="file" id="item-image" name="image" accept="image/*" required>
-              <label>Image URL (optional):
-                <input type="url" id="item-image-url" placeholder="https://…">
+              <input type="url" id="item-image" placeholder="Paste image URL here" required>
               </label>
               <small>Add either a file *or* a URL.</small>
               <div id="image-preview" class="image-preview"></div>
@@ -849,74 +847,37 @@
       });
 
       // --- Add Item Form Logic ---
-    document
-      .getElementById("add-item-form")
-      .addEventListener("submit", async function (e) {
-        e.preventDefault();
+    document.getElementById("add-item-form").addEventListener("submit", async e => {
+      e.preventDefault();
 
-        const name = document.getElementById('item-name').value.trim();
-        const price = parseFloat(document.getElementById('item-price').value);
-        const description = document.getElementById('item-description').value.trim();
-        const fileInput = document.getElementById("item-image");
-        const urlInput  = document.getElementById("item-image-url");
-        
-        if (!name || isNaN(price)) {
-          alert("Name and price are required");
-          return;
-        }
-        if (!fileInput.files[0] && !urlInput.value.trim()) {
-          alert("Provide an image (upload OR URL)");
-          return;
-        }
-        
-        let image;
+      const name        = document.getElementById("item-name").value.trim();
+      const price       = parseFloat(document.getElementById("item-price").value);
+      const description = document.getElementById("item-description").value.trim();
+      const image       = document.getElementById("item-image").value.trim();   // <—
+      const categories  = Array.from(document.getElementById("item-categories").selectedOptions)
+                                .map(opt => opt.value);
 
-        const saveItem = async () => {
+      if (!name || isNaN(price) || !image.startsWith("http")) {
+        alert("Fill all fields and supply a valid image URL");
+        return;
+      }
+
       try {
-        const session = getSession();          // your helper
-        const newItem = { name, price, description, image, categories, soldOut:false };
+        const res = await fetch(`${API_BASE}/menu`, {
+          method : "POST",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body   : JSON.stringify({ name, price, description, categories, image, soldOut:false })
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Server error");
 
-            const res = await fetch(`${API_BASE}/menu`, {
-              method : "POST",
-              headers: {
-                "Content-Type":"application/json",
-                Authorization : `Bearer ${session.token}`
-              },
-              body: JSON.stringify(newItem)
-            });
-
-            if (!res.ok) {
-              const { error } = await res.json();
-              throw new Error(error || "Server error");
-            }
-
-            alert("Menu item added!");
-            await loadMenuFromDatabase();
-            renderMenuItems?.();
-            e.target.reset();                         // clear the form
-            document.querySelector('.tab[data-tab="menu"]').click();
-          } catch (err) {
-            console.error(err);
-            alert("Failed: " + err.message);
-          }
-        };
-
-        // case 1: file upload  → convert to base64, then save
-        if (fileInput.files[0]) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            image = reader.result;   // data:image/png;base64,...
-            saveItem();
-          };
-          reader.onerror = () => alert("File read error");
-          reader.readAsDataURL(fileInput.files[0]);
-          return;
-        }
-
-        // case 2: external URL ➜ just use it
-        image = urlInput.value.trim();
-        saveItem();
-      });
+        alert("Item added!");
+        await loadMenuFromDatabase();   // refresh grid
+        e.target.reset();
+        document.querySelector('.tab[data-tab="menu"]').click();
+      } catch (err) {
+        alert("Add failed: " + err.message);
+      }
+    });
 
       // --- Add Category Form Logic ---
       // We'll store categories in window.adminCategories for this page
@@ -974,16 +935,7 @@
       document.body.addEventListener('click', async function(e) {
         // Edit button
         if (e.target.classList.contains('edit-btn')) {
-          const id = String(e.target.getAttribute('data-id'));
-          if (window.editMenuItem) window.editMenuItem(id);
-          await fetch(`${API_BASE}/menu/${id}`, {
-            method : "PUT",
-            headers: { "Content-Type":"application/json", ...authHeader() },
-            body   : JSON.stringify({
-              name, price, description, categories, image,
-              soldOut : document.getElementById("edit-item-soldout").checked
-            })
-          });
+          editMenuItem(e.target.dataset.id);
         }
         // Delete button
         if (e.target.classList.contains("delete-btn")) {
