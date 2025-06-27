@@ -261,8 +261,8 @@ function renderMenuItems() {
             <span class="price">₱${displayPrice}</span>
           </div>
           <div class="menu-item-actions">
-            <button class="edit-btn" data-id="${item.id}" ${item.soldOut ? 'disabled' : ''}>Edit</button>
-            <button class="delete-btn" data-id="${item.id}" ${item.soldOut ? 'disabled' : ''}>Delete</button>
+            <button class="edit-btn" data-id="${item.id}"}>Edit</button>
+            <button class="delete-btn" data-id="${item.id}" }>Delete</button>
           </div>
         </div>
       `;
@@ -276,9 +276,9 @@ function renderMenuItems() {
           <div class="price-controls">
             <span class="price">₱${displayPrice}</span>
             <div class="quantity-control">
-              <button class="minus" onclick="updateQuantity('${item.id}',-1)">−</button>
+              <button class="minus" onclick="updateQuantity('${item.id}',-1)" ${item.soldOut ? "disabled" : ""}>−</button>
               <span class="quantity">${item.quantity}</span>
-              <button class="plus"  onclick="updateQuantity('${item.id}',1)">+</button>
+              <button class="plus"  onclick="updateQuantity('${item.id}',1)" ${item.soldOut ? "disabled" : ""}>+</button>
             </div>
           </div>
           ${item.soldOut ? '<div style="color:#ff4444;font-weight:bold;">Sold Out</div>' : ''}

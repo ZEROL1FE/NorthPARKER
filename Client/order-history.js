@@ -7,21 +7,28 @@ if (!token) {
 
 async function fetchOrderHistory() {
   try {
-    const res = await fetch('https://northparker.onrender.com/orders', {
+    // grab the session we saved at login/signup
+    const session = JSON.parse(localStorage.getItem('session') || '{}');
+
+    // if there’s no token, kick the user to the login page
+    if (!session.token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const res = await fetch(`${API_BASE}/orders`, {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${session.token}`
       }
     });
 
     if (!res.ok) throw new Error('Failed to fetch order history');
     const orders = await res.json();
-
-    renderHistory(orders);
+    renderHistory(orders);           // your existing renderer
   } catch (err) {
     console.error(err);
-    document.getElementById('historyList').innerHTML = `
-      <p class="no-history">Error loading history: ${err.message}</p>
-    `;
+    document.getElementById('historyList').innerHTML =
+      `<p class="no-history">Error loading history: ${err.message}</p>`;
   }
 }
 
