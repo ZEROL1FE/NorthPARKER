@@ -626,6 +626,8 @@
             <div class="form-group">
               <label for="category-name">Category Name:</label>
               <input type="text" id="category-name" name="name" pattern="[A-Za-z\s]+" title="Only letters and spaces are allowed" required>
+              <label for="item-image-url">…or Paste Image URL:</label>
+              <input type="url" id="item-image-url" placeholder="https://…">
             </div>
             <div class="form-group">
               <label for="category-description">Description (optional):</label>
@@ -683,11 +685,73 @@
   <script>
     const API_BASE = "https://northparker.onrender.com";
     window.isAdminPage = true;
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof loadMenuItems === 'function') loadMenuItems();
-      if (typeof renderMenuItems === 'function') renderMenuItems();
+    function getSession() {
+      try { return JSON.parse(localStorage.getItem("session") || "{}"); }
+      catch { return {}; }
+    }
+    function authHeader() {
+      const { token } = getSession();
+      return token ? { Authorization: "Bearer " + token } : {};
+    }
+    async function fetchTableLimits() {
+      const r = await fetch(`${API_BASE}/settings/table-limits`);
+      if (!r.ok) throw new Error("Could not load limits");
+      return r.json();                    // { min: 1, max: 20 }
+    }
+    async function saveTableLimitsOnServer(max) {
+      const r = await fetch(`${API_BASE}/settings/table-limits`, {
+        method : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader()
+        },
+        body   : JSON.stringify({ min: 1, max })
+      });
+      if (!r.ok) {
+        const { error } = await r.json();
+        throw new Error(error || "Save failed");
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', async function() {
       // Log menuItems to verify global access
       console.log('window.menuItems:', window.menuItems);
+
+      // ---------- TABLE LIMIT UI ----------
+      const tableLimitForm     = document.getElementById("table-limit-form");
+      const maxTableInput      = document.getElementById("maxTableInput");
+      const tableLimitMessage  = document.getElementById("table-limit-message");
+
+      // 1. show current value from server
+      try {
+        const { max } = await fetchTableLimits();
+        maxTableInput.value = max ?? 20;
+      } catch (err) {
+        console.error(err);
+        tableLimitMessage.textContent = "⚠️ can't load current limit";
+        tableLimitMessage.style.color = "#e74c3c";
+      }
+
+      // 2. save on submit
+      tableLimitForm.addEventListener("submit", async (evt) => {
+        evt.preventDefault();
+        const max = parseInt(maxTableInput.value, 10);
+
+        if (isNaN(max) || max < 1) {
+          tableLimitMessage.textContent = "Enter a number ≥1";
+          tableLimitMessage.style.color = "#e74c3c";
+          return;
+        }
+        try {
+          await saveTableLimitsOnServer(max);
+          tableLimitMessage.textContent = "✅ saved";
+          tableLimitMessage.style.color = "#27ae60";
+        } catch (err) {
+          console.error(err);
+          tableLimitMessage.textContent = "⚠️ " + err.message;
+          tableLimitMessage.style.color = "#e74c3c";
+        }
+      });
 
       // --- Tab switching logic ---
       const tabs = document.querySelectorAll('.tab');
@@ -700,28 +764,7 @@
           const content = document.getElementById(this.getAttribute('data-tab') + '-content');
           if (content) content.classList.add('active');
         });
-        const tableLimitForm = document.getElementById('table-limit-form');
-        const maxTableInput = document.getElementById('maxTableInput');
-        const tableLimitMessage = document.getElementById('table-limit-message');
-
-        // Load current max table value
-        const tableLimits = JSON.parse(localStorage.getItem('tableLimits')) || { min: 1, max: 20 };
-        if (maxTableInput) maxTableInput.value = tableLimits.max;
-
-        if (tableLimitForm) {
-          tableLimitForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const max = parseInt(maxTableInput.value, 10);
-            if (isNaN(max) || max < 1) {
-              tableLimitMessage.textContent = "Please enter a valid maximum table number (1 or higher).";
-              tableLimitMessage.style.color = "#e74c3c";
-              return;
-            }
-            localStorage.setItem('tableLimits', JSON.stringify({ min: 1, max }));
-            tableLimitMessage.textContent = "Maximum table limit saved!";
-            tableLimitMessage.style.color = "#27ae60";
-          });
-        }
+    
       });
 
       // --- Modal helpers ---
@@ -753,7 +796,6 @@
         const idx = window.menuItems.findIndex(item => item.id === itemId);
         if (idx !== -1) {
           window.menuItems.splice(idx, 1);
-          localStorage.setItem('menuItems', JSON.stringify(window.menuItems));
           if (typeof loadMenuItems === 'function') loadMenuItems();
           if (typeof displayMenuItems === 'function') displayMenuItems();
           if (typeof renderMenuItems === 'function') renderMenuItems();
@@ -774,39 +816,85 @@
           window.menuItems[idx].categories = document.getElementById('edit-item-categories').value.split(',').map(s => s.trim()).filter(Boolean);
           window.menuItems[idx].image = document.getElementById('edit-item-image').value;
           window.menuItems[idx].soldOut = document.getElementById('edit-item-soldout').checked;
-          localStorage.setItem('menuItems', JSON.stringify(window.menuItems));
+          
           if (typeof loadMenuItems === 'function') loadMenuItems();
           if (typeof displayMenuItems === 'function') displayMenuItems();
           if (typeof renderMenuItems === 'function') renderMenuItems();
           hideEditModal();
         }
       });
-      document.getElementById('cancelEditBtn').addEventListener('click', function() {
+      document.getElementById('cancelEditBtn').addEventListener('click',  function() {
         hideEditModal();
       });
 
       // --- Add Item Form Logic ---
-      document.getElementById('add-item-form').addEventListener('submit', function(e) {
+    document
+      .getElementById("add-item-form")
+      .addEventListener("submit", async function (e) {
         e.preventDefault();
+
         const name = document.getElementById('item-name').value.trim();
         const price = parseFloat(document.getElementById('item-price').value);
         const description = document.getElementById('item-description').value.trim();
-        const imageInput = document.getElementById('item-image');
-        let image = '';
-        if (imageInput.files && imageInput.files[0]) {
-          // Use a local URL for preview (not persistent)
-          image = URL.createObjectURL(imageInput.files[0]);
+        const fileInput = document.getElementById("item-image");
+        const urlInput  = document.getElementById("item-image-url");
+        
+        if (!name || isNaN(price)) {
+          alert("Name and price are required");
+          return;
         }
-        const categoriesSelect = document.getElementById('item-categories');
-        const categories = Array.from(categoriesSelect.selectedOptions).map(opt => opt.value);
-        const newId = window.menuItems.length > 0 ? Math.max(...window.menuItems.map(i => i.id)) + 1 : 1;
-        const newItem = { id: newId, name, price, description, image, categories, quantity: 0, soldOut: false };
-        window.menuItems.push(newItem);
-        localStorage.setItem('menuItems', JSON.stringify(window.menuItems));
-        if (typeof renderMenuItems === 'function') renderMenuItems();
-        this.reset();
-        // Optionally, switch back to menu tab
-        document.querySelector('.tab[data-tab="menu"]').click();
+        if (!fileInput.files[0] && !urlInput.value.trim()) {
+          alert("Provide an image (upload OR URL)");
+          return;
+        }
+        
+        let image;
+
+        const saveItem = async () => {
+      try {
+        const session = getSession();          // your helper
+        const newItem = { name, price, description, image, categories, soldOut:false };
+
+            const res = await fetch(`${API_BASE}/menu`, {
+              method : "POST",
+              headers: {
+                "Content-Type":"application/json",
+                Authorization : `Bearer ${session.token}`
+              },
+              body: JSON.stringify(newItem)
+            });
+
+            if (!res.ok) {
+              const { error } = await res.json();
+              throw new Error(error || "Server error");
+            }
+
+            alert("Menu item added!");
+            await loadMenuFromDatabase();
+            renderMenuItems?.();
+            e.target.reset();                         // clear the form
+            document.querySelector('.tab[data-tab="menu"]').click();
+          } catch (err) {
+            console.error(err);
+            alert("Failed: " + err.message);
+          }
+        };
+
+        // case 1: file upload  → convert to base64, then save
+        if (fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            image = reader.result;   // data:image/png;base64,...
+            saveItem();
+          };
+          reader.onerror = () => alert("File read error");
+          reader.readAsDataURL(fileInput.files[0]);
+          return;
+        }
+
+        // case 2: external URL ➜ just use it
+        image = urlInput.value.trim();
+        saveItem();
       });
 
       // --- Add Category Form Logic ---
@@ -862,44 +950,36 @@
       initCategoriesFromMenu();
 
       // --- Unified event delegation for admin menu buttons ---
-      document.body.addEventListener('click', function(e) {
+      document.body.addEventListener('click', async function(e) {
         // Edit button
         if (e.target.classList.contains('edit-btn')) {
-          const id = Number(e.target.getAttribute('data-id'));
+          const id = String(e.target.getAttribute('data-id'));
           if (window.editMenuItem) window.editMenuItem(id);
         }
         // Delete button
-        if (e.target.classList.contains('delete-btn')) {
-          const id = Number(e.target.getAttribute('data-id'));
-          if (window.deleteMenuItem) window.deleteMenuItem(id);
+        if (e.target.classList.contains("delete-btn")) {
+          if (!confirm("Delete this item?")) return;
+          const id = String(e.target.dataset.id);
+          await fetch(`${API_BASE}/menu/${id}`, {
+            method:"DELETE",
+            headers: authHeader()
+          });
+          await loadMenuFromDatabase();
         }
         // Sold Out button
-        if (e.target.classList.contains('soldout-btn')) {
-          const id = Number(e.target.getAttribute('data-id'));
-          const idx = window.menuItems.findIndex(item => item.id === id);
-          if (idx !== -1) {
-            window.menuItems[idx].soldOut = !window.menuItems[idx].soldOut;
-            localStorage.setItem('menuItems', JSON.stringify(window.menuItems));
-            if (typeof renderMenuItems === 'function') renderMenuItems();
-          }
+        if (e.target.classList.contains("soldout-btn")) {
+          const id = String(e.target.dataset.id);
+          const item = window.menuItems.find(m => String(m.id) === id);
+          if (!item) return;
+          await fetch(`${API_BASE}/menu/${id}`, {
+            method :"PUT",
+            headers:{ "Content-Type":"application/json", ...authHeader() },
+            body   : JSON.stringify({ soldOut: !item.soldOut })
+          });
+          await loadMenuFromDatabase();
         }
       });
       // Fix logout button
-      function logout() {
-      console.log('Client logout function called');
-      try {
-        // Clear all session-related data
-        localStorage.removeItem('adminLoggedIn');
-        localStorage.removeItem('adminName');
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('session'); // This is what login.html checks for
-        console.log('LocalStorage cleared');
-        window.location.href = './login.html';
-      } catch (error) {
-        console.error('Error during logout:', error);
-        alert('Error during logout: ' + error.message);
-      }
-    }
     function isAdmin() {
       try {
         const session = JSON.parse(localStorage.getItem('session'));
@@ -926,6 +1006,7 @@
 
       // Set admin name in welcome and header
       var adminName = 'Admin';
+      
       try {
         var user = localStorage.getItem('currentUser');
         if (user) {
@@ -938,18 +1019,7 @@
       if (adminNameDisplay) adminNameDisplay.textContent = adminName;
       var adminNameHeader = document.getElementById('adminName');
       if (adminNameHeader) adminNameHeader.textContent = adminName;
-      function saveTableLimits() {
-        const max = parseInt(document.getElementById('maxTableInput').value, 10);
-
-        if (isNaN(max) || max < 1) {
-            alert("Please enter a valid maximum table number (1 or higher).");
-            return;
-        }
-
-        const tableLimits = { min: 1, max };
-        localStorage.setItem('tableLimits', JSON.stringify(tableLimits));
-        alert("Maximum table limit saved!");
-      }
+      
       
       function renderFeedbacks() {
         // Try to get all feedbacks (as an array) from localStorage
@@ -1031,7 +1101,9 @@
       if (feedbackTab && feedbackTab.classList.contains('active')) {
         renderFeedbacks();
       }
-      
+      if (!item.image.startsWith("http") &&
+        !item.image.startsWith("data:image/"))
+      return res.status(400).json({ error:"Invalid image format" });
     });
   </script>
 </body>

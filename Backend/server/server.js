@@ -61,6 +61,15 @@ const orderSchema = new mongoose.Schema(
 );
 const Order = mongoose.model("Order", orderSchema);
 
+const settingsSchema = new mongoose.Schema({
+  tableLimits: {
+    min: { type: Number, default: 1 },
+    max: { type: Number, required: true }
+  }
+}, { timestamps: true });
+
+const Settings = mongoose.model('Settings', settingsSchema);
+
 // ───── Auth middleware ─────
 
 function authRequired(req, res, next) {
@@ -157,12 +166,13 @@ const menuSchema = new mongoose.Schema({
   name       : String,
   description: String,
   price      : Number,
-  imageUrl   : String,
   categories : [String],
-  soldOut    : { type: Boolean, default: false }
-});
+  soldOut    : { type: Boolean, default: false },
 
-const Menu = mongoose.model("Menu", menuSchema, "menu");
+  // NEW — keep one of the two:
+  imageData  : String,   // base-64 payload (recommended for this project) OR
+  // imageUrl: String    // external url if you later move to Cloudinary/S3
+});
 
 const ratingSchema = new mongoose.Schema(
   {
@@ -189,6 +199,11 @@ app.post("/orders", authRequired, async (req, res) => {
   });
   res.status(201).json(newOrder);
 });
+app.get("/settings/table-limits", async (_, res) => {
+  const doc = await Settings.findOne();
+  if (!doc) return res.json({ min: 1, max: 20 }); // default fallback
+  res.json(doc.tableLimits);
+});
 
 app.get("/orders", authRequired, async (req, res) => {
   const orders = await Order.find().sort({ createdAt: -1 });
@@ -198,13 +213,30 @@ app.get("/menu", async (_, res) => {
   const menu = await Menu.find().sort({ name: 1 });
   res.json(menu);
 });
-app.post('/menu', authRequired, adminOnly, asyncHandler(async (req, res) => {
-  const { name, price } = req.body;
-  if (!name || !price) return res.status(400).json({ error: 'name & price required' });
+app.post("/menu", authRequired, async (req, res) => {
+  // optional: adminOnly(req, res, next)
+  const { name, price, description, categories, imageData } = req.body;
 
-  const doc = await Menu.create(req.body);
+  if (!imageData?.startsWith("data:image/")) {
+    return res.status(400).json({ error: "imageData must be a base-64 data URL" });
+  }
+
+  const doc = await Menu.create({
+    name, price, description, categories, imageData, soldOut: false
+  });
+
   res.status(201).json(doc);
-}));
+});
+app.post("/settings/table-limits", authRequired, adminOnly, async (req, res) => {
+  const { min = 1, max } = req.body;
+  if (!max || max < 1) return res.status(400).json({ error: "Invalid max" });
+
+  let doc = await Settings.findOne();
+  if (!doc) doc = new Settings();
+  doc.tableLimits = { min, max };
+  await doc.save();
+  res.json(doc.tableLimits);
+});
 
 // Update an item by id    (PUT /menu/:id)
 app.put('/menu/:id', authRequired, adminOnly,
@@ -240,7 +272,6 @@ app.patch("/orders/:id/pay", authRequired, async (req, res) => {
 
 //route for default menu
 const fs = require("fs");
-const path = require("path");
 
 app.post("/menu/reset-default", authRequired, adminOnly, async (req, res) => {
   try {

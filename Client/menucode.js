@@ -32,10 +32,10 @@ async function loadMenuFromDatabase() {
     if (!res.ok) throw new Error("Failed to fetch menu");
 
     const menu = await res.json();   // ⇒ [{ _id, name, price, … }]
-    window.menuItems = menu.map((m) => ({
+    window.menuItems = menu.map(m => ({
       ...m,
-      id      : m._id,  // keep legacy code that expects .id
-      quantity: 0,
+      id: m._id,
+      quantity: 0
     }));
     syncStateMenuItems();
 
@@ -46,12 +46,18 @@ async function loadMenuFromDatabase() {
         catSet.add(c)
       )
     );
+    window.menuItems.sort((a, b) => {
+      const catA = (a.categories?.[0] || "").toLowerCase();
+      const catB = (b.categories?.[0] || "").toLowerCase();
+      if (catA === catB) return a.name.localeCompare(b.name);
+      return catA.localeCompare(catB);
+    });
 
     state.categories = Array.from(catSet).sort();
     state.selectedCategory = state.categories.includes("Popular")
       ? "Popular"
       : state.categories[0];
-
+    
     renderCategories();
     renderMenuItems();
     updateStats();
