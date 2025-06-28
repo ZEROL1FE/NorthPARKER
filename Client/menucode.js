@@ -514,20 +514,6 @@ window.handleCheckout = async function () {
   }
 };
 
-function saveOrderToHistory(tableNumber, orderItems, total) {
-  const orderHistory = JSON.parse(localStorage.getItem("orderHistory")) || [];
-  // Get user info from session
-  const session = JSON.parse(localStorage.getItem('session') || '{}');
-  orderHistory.push({
-    tableNumber,
-    items: [...orderItems],
-    total,
-    date: new Date().toLocaleString(),
-    userEmail: session.email || "",
-    userName: session.name || ""
-  });
-  localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
-}
 
 // Add missing toggleMenu function
 window.toggleMenu = function() {

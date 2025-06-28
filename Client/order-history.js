@@ -1,31 +1,28 @@
 const API_BASE = "https://northparker.onrender.com";
 
-const token = localStorage.getItem('session');
-if (!token) {
+// Check for session
+const session = JSON.parse(localStorage.getItem('session') || '{}');
+if (!session.token) {
   alert('Please login to view your order history.');
   window.location.href = 'login.html';
 }
 
+function authHeader() {
+  const session = JSON.parse(localStorage.getItem("session") || "{}");
+  return session.token ? { Authorization: "Bearer " + session.token } : {};
+}
+
 async function fetchOrderHistory() {
   try {
-    // grab the session we saved at login/signup
-    const session = JSON.parse(localStorage.getItem('session') || '{}');
-
-    // if there’s no token, kick the user to the login page
-    if (!session.token) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    const res = await fetch(`${API_BASE}/orders`, {
-      headers: {
-        Authorization: `Bearer ${session.token}`
-      }
-    });
-
+    const res = await fetch(`${API_BASE}/orders`, { headers: authHeader() });
     if (!res.ok) throw new Error('Failed to fetch order history');
-    const orders = await res.json();
-    renderHistory(orders);           // your existing renderer
+    const allOrders = await res.json();
+
+    const myOrders = allOrders.filter(
+      o => o.userEmail === session.email
+    );
+
+    renderHistory(myOrders);
   } catch (err) {
     console.error(err);
     document.getElementById('historyList').innerHTML =
@@ -42,10 +39,14 @@ function renderHistory(orders) {
 
   container.innerHTML = orders.map(order => {
     const itemList = order.items.map(item =>
-      `<li>${item.name} x${item.qty} - ₱${(item.qty * item.price).toFixed(2)}</li>`
+      `<li>${item.name} x${item.quantity} - ₱${(item.quantity * item.price).toFixed(2)}</li>`
     ).join('');
 
-    const total = order.items.reduce((sum, item) => sum + item.qty * item.price, 0).toFixed(2);
+    const total = order.items.reduce(
+      (sum, item) => sum + item.quantity * item.price,
+      0
+    ).toFixed(2);
+
     const formattedDate = new Date(order.createdAt).toLocaleString();
 
     return `
