@@ -6,6 +6,8 @@ const state = {
   orderItems: [] 
 }
 
+const API_BASE = 'https://northparker.onrender.com/';
+
 window.menuItems = [];
 function getSession () {
   try { return JSON.parse(localStorage.getItem("session") || "{}"); }
@@ -25,6 +27,42 @@ if (!getSession().token) redirectToLogin();
 
 
 // Loads the menu from DB
+async function saveMenuItems () {
+  // Only call this after you’ve changed something in window.menuItems
+  const session = JSON.parse(localStorage.getItem('session') || '{}');
+  if (!session.token) return alert('Not logged in');
+
+  // decide which fields you want to persist
+  const payloadFields = ['name', 'price', 'description',
+                         'categories', 'image', 'soldOut'];
+
+  try {
+    for (const item of window.menuItems) {
+      // For bigger apps you’d diff against a “pristine” copy and skip unchanged rows
+      const body = {};
+      payloadFields.forEach(k => (body[k] = item[k]));
+
+      const res = await fetch(`${API_BASE}menu/${item._id}`, {
+        method : 'PUT',            // or 'PATCH' if you add a PATCH route
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization : `Bearer ${session.token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const { error = 'unknown' } = await res.json().catch(() => ({}));
+        console.error(`⚠️  Update failed for ${item.name}:`, error);
+      }
+    }
+
+    console.log('✅ All menu changes saved');
+  } catch (err) {
+    console.error('❌ saveMenuItems():', err);
+    alert('Saving menu failed – check console for details.');
+  }
+}
 
 async function loadMenuFromDatabase() {
   try {
@@ -38,9 +76,7 @@ async function loadMenuFromDatabase() {
       quantity: 0
     }));
     syncStateMenuItems();
-    window.adminCategories = extractAllCategories(window.menuItems);
-    updateCategorySelect(); 
-    renderAdminCategories();
+    
     // Build category list
     const catSet = new Set();
     window.menuItems.forEach((it) =>
@@ -62,8 +98,9 @@ async function loadMenuFromDatabase() {
     renderCategories();
     renderMenuItems();
     updateStats();
-
-    initCategoriesFromMenu();
+    window.adminCategories = extractAllCategories(window.menuItems);
+    updateCategorySelect();       // populates <select multiple>
+    renderAdminCategories();
   } catch (err) {
     console.error("Menu load error → showing empty menu", err);
     window.menuItems = [];
@@ -73,7 +110,13 @@ async function loadMenuFromDatabase() {
 }
 
 state.menuItems = window.menuItems;
-
+function extractAllCategories(menuItems) {
+  const catSet = new Set();
+  menuItems.forEach(item => {
+    (item.categories || []).forEach(cat => catSet.add(cat));
+  });
+  return Array.from(catSet).sort();
+}
 // Helper to sync state.menuItems after any change to window.menuItems
 function syncStateMenuItems() {
   state.menuItems = window.menuItems;
@@ -114,7 +157,7 @@ function loadDefaultMenu() {
 
 
 // Debug: Log loaded menu items
-console.log('[DEBUG] Loaded menuItems from localStorage:', state.menuItems);
+console.log('[DEBUG] Loaded menuItems from DB:', window.menuItems);
 
 // Get table limits from localStorage
 
@@ -262,8 +305,8 @@ function renderMenuItems() {
             <span class="price">₱${displayPrice}</span>
           </div>
           <div class="menu-item-actions">
-            <button class="edit-btn" data-id="${item.id}"}>Edit</button>
-            <button class="delete-btn" data-id="${item.id}" }>Delete</button>
+            <button class="edit-btn" data-id="${item._id}">Edit</button>
+            <button class="delete-btn" data-id="${item._id}">Delete</button>
           </div>
         </div>
       `;
@@ -277,9 +320,9 @@ function renderMenuItems() {
           <div class="price-controls">
             <span class="price">₱${displayPrice}</span>
             <div class="quantity-control">
-              <button class="minus" onclick="updateQuantity('${item.id}',-1)" ${item.soldOut ? "disabled" : ""}>−</button>
+              <button class="minus" onclick="updateQuantity('${item._id}',-1)" ${item.soldOut ? "disabled" : ""}>−</button>
               <span class="quantity">${item.quantity}</span>
-              <button class="plus"  onclick="updateQuantity('${item.id}',1)" ${item.soldOut ? "disabled" : ""}>+</button>
+              <button class="plus"  onclick="updateQuantity('${item._id}',1)" ${item.soldOut ? "disabled" : ""}>+</button>
             </div>
           </div>
           ${item.soldOut ? '<div style="color:#ff4444;font-weight:bold;">Sold Out</div>' : ''}
@@ -414,18 +457,18 @@ window.handleCategoryClick = function (category) {
 
 window.updateQuantity = function (id, increment) {
   state.menuItems = state.menuItems.map((item) => {
-    if (item.id === id) {
+    if (item._id === id) {
       const newQuantity = Math.max(0, item.quantity + increment);
 
       if (increment > 0) {
         const existingOrderItem = state.orderItems.find(
-          (orderItem) => orderItem.id === id,
+          (orderItem) => orderItem._id === id,
         );
         if (existingOrderItem) {
           existingOrderItem.quantity = newQuantity;
         } else {
           state.orderItems.push({
-            id: item.id,
+            id: item._id,
             name: item.name,
             price: item.price,
             quantity: 1,
@@ -433,12 +476,12 @@ window.updateQuantity = function (id, increment) {
         }
       } else if (increment < 0) {
         const existingOrderItem = state.orderItems.find(
-          (orderItem) => orderItem.id === id,
+          (orderItem) => orderItem._id === id,
         );
         if (existingOrderItem) {
           if (newQuantity === 0) {
             state.orderItems = state.orderItems.filter(
-              (orderItem) => orderItem.id !== id,
+              (orderItem) => orderItem._id !== id,
             );
           } else {
             existingOrderItem.quantity = newQuantity;
@@ -538,7 +581,7 @@ document.addEventListener('click', (e) => {
   if (e.target.classList.contains('soldout-btn')) {
     const id  = String(e.target.getAttribute('data-id'));   
     const idx = window.menuItems.findIndex(
-      (item) => String(item.id) === id                      
+      (item) => String(item._id) === id
     );
 
     if (idx !== -1) {
