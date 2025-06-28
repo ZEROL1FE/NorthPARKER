@@ -89,9 +89,9 @@ const ratingSchema = new mongoose.Schema(
     userId   : { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     userName : String,                // display name or email
     ratings  : {                      // each 0-5
-      food    : Number,
-      service : Number,
-      overall : Number
+    food     : Number,
+    service  : Number,
+    overall  : Number
     },
     comments : String,
   },
