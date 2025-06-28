@@ -905,7 +905,7 @@
       // --- Helper to update the Add Item category select ---
       function updateCategorySelect() {
         const select = document.getElementById('item-categories');
-        select.innerHTML = '';
+        select.innerHTML = ''; // Clear old options
         window.adminCategories.forEach(cat => {
           const opt = document.createElement('option');
           opt.value = cat;
@@ -926,7 +926,14 @@
           grid.appendChild(div);
         });
       }
-
+      
+      function extractAllCategories(menuItems) {
+        const catSet = new Set();
+        menuItems.forEach(item => {
+          (item.categories || []).forEach(cat => catSet.add(cat));
+        });
+        return Array.from(catSet).sort();
+      }
       // Initialize categories from menu items
       function initCategoriesFromMenu() {
         const cats = new Set();
@@ -1065,6 +1072,11 @@
         renderFeedbacks();
       }
     });
+    const categories = extractAllCategories(window.menuItems);
+    window.adminCategories = categories;
+    updateCategorySelect();         // Populate <select> in Add Item
+    renderAdminCategories();
+    document.querySelector('.tab[data-tab="add-item"]').addEventListener('click', updateCategorySelect);
   </script>
 </body>
 </html>
