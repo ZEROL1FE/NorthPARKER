@@ -151,7 +151,7 @@ app.post("/auth/signup", async (req, res) => {
 
   // auto-login right after sign-up (optional)
   const token = jwt.sign(
-    { id: user._id, role: user.role, name: user.name },
+    { id: user._id, role: user.role, name: user.name, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "24h" }
   );
@@ -169,7 +169,7 @@ app.post("/auth/login", async (req, res) => {
   if (!ok) return res.status(400).json({ error: "Invalid email or password" });
 
   const token = jwt.sign(
-    { id: user._id, role: user.role, name: user.name },
+    { id: user._id, role: user.role, name: user.name, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "24h" }
   );
@@ -207,16 +207,30 @@ app.post("/orders", authRequired, async (req, res) => {
   });
   res.status(201).json(newOrder);
 });
+app.get("/orders", authRequired, async (req, res) => {
+  const orders = await Order.find().sort({ createdAt: -1 });
+  res.json(orders);
+});
+app.patch("/orders/:id/pay", authRequired, async (req, res) => {
+  const { method } = req.body;               // 'cash' | 'gcash' | 'card'
+  if (!method) return res.status(400).json({ error: "Missing payment method" });
+
+  const order = await Order.findByIdAndUpdate(
+    req.params.id,
+    { paymentMethod: method, paymentStatus: "paid" },
+    { new: true }
+  );
+  if (!order) return res.status(404).json({ error: "Order not found" });
+
+  res.json(order);
+});
 app.get("/settings/table-limits", async (_, res) => {
   const doc = await Settings.findOne();
   if (!doc) return res.json({ min: 1, max: 20 }); // default fallback
   res.json(doc.tableLimits);
 });
 
-app.get("/orders", authRequired, async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
-  res.json(orders);
-});
+
 app.get("/menu", async (_, res) => {
   const menu = await Menu.find().sort({ name: 1 });
   res.json(menu);
@@ -268,19 +282,7 @@ app.delete('/menu/:id', authRequired, adminOnly,
 }));
 
 // --- route to mark an order as paid ---
-app.patch("/orders/:id/pay", authRequired, async (req, res) => {
-  const { method } = req.body;               // 'cash' | 'gcash' | 'card'
-  if (!method) return res.status(400).json({ error: "Missing payment method" });
 
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { paymentMethod: method, paymentStatus: "paid" },
-    { new: true }
-  );
-  if (!order) return res.status(404).json({ error: "Order not found" });
-
-  res.json(order);
-});
 
 // ───── Startup ─────
 

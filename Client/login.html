@@ -217,11 +217,12 @@
     
     //  Utility: save token + role for later pages
     
-    function saveSession({ token, role, name }) {
+    function saveSession({ token, role, name, email }) {
       const session = {
         token,
         role,
         name,
+        email,
         loginTime: Date.now()
       };
       localStorage.setItem("session", JSON.stringify(session));
