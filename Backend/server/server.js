@@ -186,7 +186,15 @@ app.post("/auth/login", async (req, res) => {
 
   res.json({ token, role: user.role, name: user.name, email: user.email });
 });
-
+app.get("/ratings", authRequired, adminOnly, async (req, res) => {
+  const ratings = await Rating.find().sort({ createdAt: -1 });
+  res.json(ratings);
+});
+app.delete("/ratings/:id", authRequired, adminOnly, async (req, res) => {
+  const deleted = await Rating.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ error: "Not found" });
+  res.json({ success: true });
+});
 app.post("/ratings", authRequired, async (req, res) => {
   const { ratings, comments } = req.body;
   if (!ratings) return res.status(400).json({ error: "Missing ratings" });

@@ -517,6 +517,14 @@
     .admin-orders-btn:hover {
       background: #3736a1;
     }
+    .one-feedback {
+      background:#fffbe6; border:1px solid #ffe194;
+      border-radius:8px; padding:16px; margin-bottom:12px;
+    }
+    .one-feedback button {
+      margin-top:8px; background:#ff4444; color:#fff;
+      border:none; padding:6px 14px; border-radius:6px; cursor:pointer;
+    }
   </style>
 </head>
 <body>
@@ -961,122 +969,96 @@
         }
       });
       // Fix logout button
-    function isAdmin() {
+    async function renderFeedbacks() {
+      const container = document.createElement("div");
+      container.style.marginTop = "20px";
+
       try {
-        const session = JSON.parse(localStorage.getItem('session'));
-        if (session && session.role === 'admin') return true;
-      } catch (e) {}
-      try {
-        const user = JSON.parse(localStorage.getItem('currentUser'));
-        if (user && user.role === 'admin') return true;
-      } catch (e) {}
-      return false;
-    }
-    if (!localStorage.getItem('session')) {
-      alert('You must be logged in to access this page.');
-      window.location.href = 'login.html';
-    } else if (!isAdmin()) {
-    alert('You must be an admin to view this page.');
-    window.location.href = 'login.html';
-    return;
-    }
+        const sess  = JSON.parse(localStorage.getItem("session") || "{}");
+        const r     = await fetch(`${API_BASE}/ratings`, {
+          headers: { Authorization: `Bearer ${sess.token || ""}` }
+        });
 
-      // Always hide the edit modal on page load
-      var editModal = document.getElementById('editModal');
-      if (editModal) editModal.style.display = 'none';
-
-      // Set admin name in welcome and header
-      var adminName = 'Admin';
-      
-      try {
-        var user = localStorage.getItem('currentUser');
-        if (user) {
-          user = JSON.parse(user);
-          if (user.name) adminName = user.name;
-          else if (user.username) adminName = user.username;
+        if (r.status === 401) {
+          container.innerHTML = "<p>⚠️ Please log‑in again.</p>";
+          swapIn(container);           // helper below
+          return;
         }
-      } catch (e) {}
-      var adminNameDisplay = document.getElementById('adminNameDisplay');
-      if (adminNameDisplay) adminNameDisplay.textContent = adminName;
-      var adminNameHeader = document.getElementById('adminName');
-      if (adminNameHeader) adminNameHeader.textContent = adminName;
-      
-      
-      function renderFeedbacks() {
-        // Try to get all feedbacks (as an array) from localStorage
-        let feedbacks = [];
-        // If you only store the latest feedback as 'userRating', wrap it in an array
-        const single = localStorage.getItem('userRating');
-        if (single) {
-          try { feedbacks.push(JSON.parse(single)); } catch (e) {}
-        }
-        // If you store multiple feedbacks as 'userRatings', use that instead
-        const multi = localStorage.getItem('userRatings');
-        if (multi) {
-          try { feedbacks = JSON.parse(multi); } catch (e) {}
-        }
+        const feedbacks = await r.json();
 
-        const container = document.createElement('div');
-        container.style.marginTop = '20px';
-
-        // ...inside renderFeedbacks()...
         if (!feedbacks.length) {
-          container.innerHTML = '<p>No feedbacks yet.</p>';
+          container.innerHTML = "<p>No feedbacks yet.</p>";
         } else {
-          feedbacks.reverse().forEach((fb, idx) => {
-            const div = document.createElement('div');
-            div.style.background = '#fffbe6';
-            div.style.border = '1px solid #ffe194';
-            div.style.borderRadius = '8px';
-            div.style.padding = '16px';
-            div.style.marginBottom = '16px';
+          feedbacks.forEach((fb, idx) => {
+            const div = document.createElement("div");
+            div.className = "one-feedback";
             div.innerHTML = `
-              <strong>Feedback #${feedbacks.length - idx}</strong><br>
-              <b>User:</b> ${fb.userName ? fb.userName : '<i>Unknown</i>'}<br>
-              <b>Food:</b> ${fb.ratings?.food || 0} ⭐<br>
-              <b>Service:</b> ${fb.ratings?.service || 0} ⭐<br>
-              <b>Overall:</b> ${fb.ratings?.overall || 0} ⭐<br>
-              <b>Comments:</b> ${fb.comments ? fb.comments : '<i>No comments</i>'}<br>
-              <small>${fb.timestamp ? new Date(fb.timestamp).toLocaleString() : ''}</small><br>
-              <button class="delete-feedback-btn" data-feedback-idx="${feedbacks.length - 1 - idx}" style="margin-top:8px;background:#ff4444;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;">Delete</button>
+              <strong>#${idx + 1}</strong><br>
+              <b>User:</b> ${fb.userName || fb.userEmail || "<i>Unknown</i>"}<br>
+              <b>Food:</b> ${fb.ratings?.food ?? 0} ⭐ &nbsp;
+              <b>Service:</b> ${fb.ratings?.service ?? 0} ⭐ &nbsp;
+              <b>Overall:</b> ${fb.ratings?.overall ?? 0} ⭐<br>
+              <b>Comments:</b> ${fb.comments || "<i>No comments</i>"}<br>
+              <small>${new Date(fb.createdAt).toLocaleString()}</small><br>
+              <button class="delete-rating" data-id="${fb._id}">
+                Delete
+              </button>
             `;
             container.appendChild(div);
           });
         }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p>Error loading: ${err.message}</p>`;
+      }
 
-        // Insert into the Feedbacks tab content
-        let feedbackTabContent = document.getElementById('Feedbacks-content');
-        if (!feedbackTabContent) {
-          feedbackTabContent = document.createElement('div');
-          feedbackTabContent.id = 'Feedbacks-content';
-          feedbackTabContent.className = 'tab-content';
-          document.querySelector('.main').appendChild(feedbackTabContent);
-        }
-        feedbackTabContent.innerHTML = '';
-        feedbackTabContent.appendChild(container);
+      swapIn(container);   // put container into the Feedbacks tab
 
-        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-        feedbackTabContent.classList.add('active');
+      /* single delegated click handler for delete buttons */
+      container.addEventListener("click", async (ev) => {
+        if (!ev.target.classList.contains("delete-rating")) return;
+        if (!confirm("Delete this feedback?")) return;
 
-        container.querySelectorAll('.delete-feedback-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            if (!confirm('Delete this feedback?')) return;
-            let allFeedbacks = JSON.parse(localStorage.getItem('userRatings') || '[]');
-            const idx = parseInt(this.getAttribute('data-feedback-idx'), 10);
-            allFeedbacks.splice(idx, 1);
-            localStorage.setItem('userRatings', JSON.stringify(allFeedbacks));
-            renderFeedbacks();
+        const id   = ev.target.dataset.id;
+        const sess = JSON.parse(localStorage.getItem("session") || "{}");
+
+        try {
+          const r = await fetch(`${API_BASE}/ratings/${id}`, {
+            method : "DELETE",
+            headers: { Authorization: `Bearer ${sess.token || ""}` }
           });
-        });
-      }
-      
-      
+          if (!r.ok) throw new Error("Delete failed");
+          ev.target.closest(".one-feedback").remove();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    }
 
-      // Show feedbacks when Feedbacks tab is clicked
-      const feedbackTab = document.querySelector('.tab[data-tab="Feedbacks"]');
-      if (feedbackTab) {
-        feedbackTab.addEventListener('click', renderFeedbacks);
+    /* helper: replace (or create) the Feedback tab content */
+    function swapIn(node) {
+      let tab = document.getElementById("Feedbacks-content");
+      if (!tab) {
+        tab = document.createElement("div");
+        tab.id = "Feedbacks-content";
+        tab.className = "tab-content";
+        document.querySelector(".main").appendChild(tab);
       }
+      tab.innerHTML = "";
+      tab.appendChild(node);
+
+      /* highlight this tab */
+      document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+      tab.classList.add("active");
+    }
+
+    /* activate when the “Feedbacks” tab is clicked (or already active) */
+    const feedbackTab = document.querySelector('.tab[data-tab="Feedbacks"]');
+    if (feedbackTab) {
+      feedbackTab.addEventListener("click", renderFeedbacks);
+      /* if tab was active on initial load */
+      if (feedbackTab.classList.contains("active")) renderFeedbacks();
+    }
 
       // Optionally, render feedbacks if Feedbacks tab is active on load
       if (feedbackTab && feedbackTab.classList.contains('active')) {

@@ -26,20 +26,21 @@ function isAdmin() {
   return false;
 }
 
+
 function filterOrders(orders, search, payment) {
   search = search.trim().toLowerCase();
   return orders.filter(order => {
+    /* ----- SEARCH ----- */
     let matchesSearch = true;
     if (search) {
-      const user = (order.userEmail || '').toLowerCase();
-      const table = (order.tableNumber + '').toLowerCase();
+      const user  = (order.userEmail || '').toLowerCase();
+      const table = (order.table + '').toLowerCase();          // <── table, not tableNumber
       const items = (order.items || []).map(i => i.name.toLowerCase()).join(' ');
       matchesSearch = user.includes(search) || table.includes(search) || items.includes(search);
     }
+    /* ----- PAYMENT FILTER ----- */
     let matchesPayment = true;
-    if (payment) {
-      matchesPayment = order.paymentMethod === payment;
-    }
+    if (payment) matchesPayment = order.paymentMethod === payment;
     return matchesSearch && matchesPayment;
   });
 }
@@ -55,65 +56,54 @@ async function renderAllOrders() {
   }
   const container = document.getElementById('ordersTableContainer');
   const session = JSON.parse(localStorage.getItem("session"));
-  const res = await fetch(`${API_BASE}/orders`, {
-    headers: {
-      Authorization: `Bearer ${session?.token || ""}`
-    }
-  });
-  const orderHistory = await res.json();
-  const search = document.getElementById('searchInput')?.value || '';
+
+//------------------------------------------------------------------------
+
+  
+  const res = await fetch(`${API_BASE}/orders`, { headers: authHeader() });
+  const orders = await res.json();
+
+  const search  = document.getElementById('searchInput')?.value || '';
   const payment = document.getElementById('paymentFilter')?.value || '';
-  const filteredOrders = filterOrders(orderHistory, search, payment);
-  if (!filteredOrders.length) {
+  const filtered = filterOrders(orders, search, payment);
+
+  if (!filtered.length) {
     container.innerHTML = '<div class="no-orders">No orders found.</div>';
     return;
   }
-  let table = `<table class='orders-table'>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>User Email / Name</th>
-        <th>Table</th>
-        <th>Date</th>
-        <th>Items</th>
-        <th>Total</th>
-        <th>Payment Method</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>`;
 
-  filteredOrders.forEach((order, idx) => {
-    const itemsHtml = order.items.map(item => `<li>${item.name} x${item.quantity} - ₱${(item.price * item.quantity).toFixed(2)}</li>`).join('');
-    let paymentLabel = '';
-    if (order.paymentMethod) {
-      if (order.paymentMethod === 'cash') paymentLabel = 'Cash';
-      else if (order.paymentMethod === 'gcash') paymentLabel = 'GCash';
-      else if (order.paymentMethod === 'card') paymentLabel = 'Credit/Debit Card';
-      else paymentLabel = order.paymentMethod;
-    }
-    table += `<tr>
-      <td>${idx + 1}</td>
-      <td>
-        ${order.userEmail || '<i>Unknown</i>'}
-        ${order.userName ? `<br><span style="font-size:12px;color:#888;">${order.userName}</span>` : ""}
-      </td>
-      <td>${order.tableNumber}</td>
-      <td>${order.date}</td>
-      <td><ul class='items-list'>${itemsHtml}</ul></td>
-      <td>₱${order.total.toFixed(2)}</td>
-      <td>${paymentLabel || '<i>Not set</i>'}</td>
-      <td>
-        <button class="delete-order-btn"
-                data-order-id="${order._id}"
-                style="background:#ff4444;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;">
-          Delete
-        </button>
-      </td>
-    </tr>`;
+  let html = `<table class="orders-table"><thead><tr>
+      <th>#</th><th>User</th><th>Table</th><th>Date</th>
+      <th>Items</th><th>Total</th><th>Payment</th><th>Action</th>
+    </tr></thead><tbody>`;
+
+  filtered.forEach((order, idx) => {
+    const itemsLi = order.items
+      .map(i => `<li>${i.name} x${i.quantity} – ${formatPeso(i.quantity * i.price)}</li>`)
+      .join('');
+
+    const total = order.items
+      .reduce((sum, i) => sum + i.quantity * i.price, 0);
+
+    const payLabel = order.paymentMethod
+      ? ({ cash:'Cash', gcash:'GCash', card:'Credit/Debit Card' }[order.paymentMethod] || order.paymentMethod)
+      : '<i>Not set</i>';
+
+    html += `<tr>
+        <td>${idx + 1}</td>
+        <td>${order.userEmail || '<i>Unknown</i>'}
+            ${order.userName ? `<br><small>${order.userName}</small>` : ''}</td>
+        <td>${order.table}</td>
+        <td>${new Date(order.createdAt).toLocaleString()}</td>
+        <td><ul class="items-list">${itemsLi}</ul></td>
+        <td>${formatPeso(total)}</td>
+        <td>${payLabel}</td>
+        <td><button class="delete-order-btn" data-order-id="${order._id}">Delete</button></td>
+      </tr>`;
   });
-  table += '</tbody></table>';
-  container.innerHTML = table;
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
 
   // Add delete button event listeners
   container.querySelectorAll(".delete-order-btn").forEach(btn => {
@@ -144,29 +134,19 @@ async function renderAllOrders() {
 }
 
 async function exportOrdersToCSV() {
-  const session = JSON.parse(localStorage.getItem("session"));
-  const res = await fetch(`${API_BASE}/orders`, {
-    headers: {
-      Authorization: `Bearer ${session?.token || ""}`
-    }
-  });
-  const orderHistory = await res.json();
-  const search = document.getElementById('searchInput')?.value || '';
+  const res = await fetch(`${API_BASE}/orders`, { headers: authHeader() });
+  const orders = await res.json();
+  const search  = document.getElementById('searchInput')?.value || '';
   const payment = document.getElementById('paymentFilter')?.value || '';
-  const filteredOrders = filterOrders(orderHistory, search, payment);
-  if (!filteredOrders.length) {
-    alert('No orders to export.');
-    return;
-  }
-  let csv = 'Order #,User Email,Table,Date,Items,Total,Payment Method\n';
-  filteredOrders.forEach((order, idx) => {
-    const items = order.items.map(item => `${item.name} x${item.quantity} (₱${(item.price * item.quantity).toFixed(2)})`).join('; ');
-    let paymentLabel = '';
-    if (order.paymentMethod === 'cash') paymentLabel = 'Cash';
-    else if (order.paymentMethod === 'gcash') paymentLabel = 'GCash';
-    else if (order.paymentMethod === 'card') paymentLabel = 'Credit/Debit Card';
-    else paymentLabel = order.paymentMethod || '';
-    csv += `${idx + 1},"${order.userEmail || ''}",${order.tableNumber},"${order.date}","${items}",${order.total.toFixed(2)},${paymentLabel}\n`;
+  const filtered = filterOrders(orders, search, payment);
+  if (!filtered.length) return alert('No orders to export.');
+
+  let csv = 'Order#,User Email,Table,Date,Items,Total,Payment Method\n';
+  filtered.forEach((o,i)=>{
+    const items = o.items.map(it=>`${it.name} x${it.quantity} (${formatPeso(it.quantity*it.price)})`).join('; ');
+    const total = o.items.reduce((s,it)=>s+it.quantity*it.price,0);
+    const pay   = o.paymentMethod || '';
+    csv += `${i+1},"${o.userEmail||''}",${o.table},"${new Date(o.createdAt).toLocaleString()}","${items}",${total},${pay}\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -184,5 +164,4 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchInput').addEventListener('input', renderAllOrders);
   document.getElementById('paymentFilter').addEventListener('change', renderAllOrders);
   document.getElementById('exportCsvBtn').addEventListener('click', exportOrdersToCSV);
-  
-}); 
+});

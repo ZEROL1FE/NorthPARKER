@@ -55,12 +55,13 @@ async function loadMenuFromDatabase() {
 
     state.categories = Array.from(catSet).sort();
     state.selectedCategory = state.categories.includes("Popular")
-      ? "Popular"
-      : state.categories[0];
-    
+      ? "Popular" : state.categories[0];
+
     renderCategories();
     renderMenuItems();
     updateStats();
+
+    initCategoriesFromMenu();
   } catch (err) {
     console.error("Menu load error → showing empty menu", err);
     window.menuItems = [];
