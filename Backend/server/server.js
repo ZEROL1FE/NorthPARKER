@@ -151,12 +151,22 @@ app.post("/auth/signup", async (req, res) => {
 
   // auto-login right after sign-up (optional)
   const token = jwt.sign(
-    { id: user._id, role: user.role, name: user.name, email: user.email },
+    { id: 
+      user._id, 
+      role: user.role, 
+      name: user.name, 
+      email: user.email 
+    },
     process.env.JWT_SECRET,
     { expiresIn: "24h" }
   );
 
-  res.status(201).json({ token, role: user.role, name: user.name });
+  res.status(201).json({ 
+    token, 
+    role: user.role, 
+    name: user.name, 
+    email: user.email
+  });
 });
 // ───── Auth routes ─────
 app.post("/auth/login", async (req, res) => {
@@ -174,7 +184,7 @@ app.post("/auth/login", async (req, res) => {
     { expiresIn: "24h" }
   );
 
-  res.json({ token, role: user.role, name: user.name });
+  res.json({ token, role: user.role, name: user.name, email: user.email });
 });
 
 app.post("/ratings", authRequired, async (req, res) => {
