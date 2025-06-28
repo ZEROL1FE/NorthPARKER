@@ -38,7 +38,9 @@ async function loadMenuFromDatabase() {
       quantity: 0
     }));
     syncStateMenuItems();
-
+    window.adminCategories = extractAllCategories(window.menuItems);
+    updateCategorySelect(); 
+    renderAdminCategories();
     // Build category list
     const catSet = new Set();
     window.menuItems.forEach((it) =>

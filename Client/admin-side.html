@@ -780,7 +780,7 @@
       function showEditModal(itemId) {
         const item = window.menuItems.find(item => item.id === itemId);
         if (!item) return;
-        document.getElementById('edit-item-id').value = item.id;
+        document.getElementById('edit-item-id').value = item._id;
         document.getElementById('edit-item-name').value = item.name;
         document.getElementById('edit-item-price').value = item.price;
         document.getElementById('edit-item-description').value = item.description;
@@ -965,7 +965,7 @@
         // Sold Out button
         if (e.target.classList.contains("soldout-btn")) {
           const id = String(e.target.dataset.id);
-          const item = window.menuItems.find(m => String(m.id) === id);
+          const item = window.menuItems.find(m => String(m._id) === id)
           if (!item) return;
           await fetch(`${API_BASE}/menu/${id}`, {
             method :"PUT",
@@ -1041,6 +1041,7 @@
         }
       });
     }
+    
 
     /* helper: replace (or create) the Feedback tab content */
     function swapIn(node) {
@@ -1072,11 +1073,6 @@
         renderFeedbacks();
       }
     });
-    const categories = extractAllCategories(window.menuItems);
-    window.adminCategories = categories;
-    updateCategorySelect();         // Populate <select> in Add Item
-    renderAdminCategories();
-    document.querySelector('.tab[data-tab="add-item"]').addEventListener('click', updateCategorySelect);
   </script>
 </body>
 </html>
